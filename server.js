@@ -28,6 +28,9 @@ app.use(express.json({limit:'20kb'}));
 app.use(express.urlencoded({extended:false}));
 app.use(session({secret:process.env.SESSION_SECRET || 'dev-only-change-me',resave:false,saveUninitialized:false,cookie:{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:1000*60*60*8}}));
 app.use(express.static(path.join(__dirname,'public')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 const authorized = (req,res,next)=>req.session.admin?next():res.status(401).json({error:'Faça login para continuar.'});
 function safeEqual(a,b){const x=crypto.createHash('sha256').update(String(a)).digest();const y=crypto.createHash('sha256').update(String(b)).digest();return crypto.timingSafeEqual(x,y);}
 app.get('/api/public',(req,res)=>res.json({members:readMembers(),streams:readStreams(),gallery,discord:process.env.DISCORD_INVITE||'https://discord.gg/qy6EaS2pQ'}));
