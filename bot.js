@@ -73,7 +73,7 @@ async function siteSync(method, endpoint, payload) {
         Authorization: 'Bearer ' + process.env.BOT_SYNC_SECRET
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(60000)
     }
   );
 
