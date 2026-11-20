@@ -1,17 +1,23 @@
 
+
 const crypto = require('crypto');
 const multer = require('multer');
 
 module.exports = function setupGallery(app, { authorized, redis }) {
-  // Mantém a mesma chave para preservar as fotos antigas
+
+  // Não alterar: mantém acesso às publicações antigas.
   const KEY = 'tropa-japao:gallery:v1';
+
   const categories = ['Eventos', 'Veículos', 'Roleplay'];
   const IMAGE_LIMIT = 8 * 1024 * 1024;
   const VIDEO_LIMIT = 50 * 1024 * 1024;
 
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: VIDEO_LIMIT, files: 1 },
+    limits: {
+      fileSize: VIDEO_LIMIT,
+      files: 1
+    },
     fileFilter(req, file, cb) {
       const allowed = [
         'image/jpeg',
@@ -22,7 +28,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
       if (!allowed.includes(file.mimetype)) {
         return cb(new Error(
-          'Formato invalido. Use JPG, PNG, WEBP ou MP4.'
+          'Formato inválido. Use JPG, PNG, WEBP ou MP4.'
         ));
       }
 
@@ -41,11 +47,13 @@ module.exports = function setupGallery(app, { authorized, redis }) {
       CLOUDINARY_API_SECRET
     } = process.env;
 
-    if (!CLOUDINARY_CLOUD_NAME ||
-        !CLOUDINARY_API_KEY ||
-        !CLOUDINARY_API_SECRET) {
+    if (
+      !CLOUDINARY_CLOUD_NAME ||
+      !CLOUDINARY_API_KEY ||
+      !CLOUDINARY_API_SECRET
+    ) {
       throw new Error(
-        'Configure as variaveis CLOUDINARY no Render'
+        'Configure as variáveis CLOUDINARY no Render'
       );
     }
 
@@ -65,7 +73,10 @@ module.exports = function setupGallery(app, { authorized, redis }) {
       const host = url.hostname.toLowerCase();
       let id = null;
 
-      if (host === 'youtu.be' || host === 'www.youtu.be') {
+      if (
+        host === 'youtu.be' ||
+        host === 'www.youtu.be'
+      ) {
         id = url.pathname.split('/').filter(Boolean)[0];
       } else if ([
         'youtube.com',
@@ -83,7 +94,9 @@ module.exports = function setupGallery(app, { authorized, redis }) {
         }
       }
 
-      return /^[a-zA-Z0-9_-]{11}$/.test(id || '') ? id : null;
+      return /^[a-zA-Z0-9_-]{11}$/.test(id || '')
+        ? id
+        : null;
     } catch {
       return null;
     }
@@ -102,7 +115,11 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     } else if (raw && typeof raw === 'object') {
       for (const value of Object.values(raw)) {
         try {
-          items.push(JSON.parse(value));
+          items.push(
+            typeof value === 'string'
+              ? JSON.parse(value)
+              : value
+          );
         } catch {}
       }
     }
@@ -116,11 +133,13 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     const category = req.body?.category;
     const title = String(req.body?.title || '').trim();
 
-    if (!categories.includes(category) ||
-        title.length < 2 ||
-        title.length > 80) {
+    if (
+      !categories.includes(category) ||
+      title.length < 2 ||
+      title.length > 80
+    ) {
       res.status(400).json({
-        error: 'Escolha uma categoria e um titulo de 2 a 80 caracteres'
+        error: 'Escolha uma categoria e um título de 2 a 80 caracteres'
       });
       return null;
     }
@@ -163,9 +182,11 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
     const result = await response.json();
 
-    if (!response.ok ||
-        !result.secure_url ||
-        !result.public_id) {
+    if (
+      !response.ok ||
+      !result.secure_url ||
+      !result.public_id
+    ) {
       throw new Error(
         'Cloudinary upload: ' +
         JSON.stringify(result).slice(0, 300)
@@ -203,8 +224,10 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
     const result = await response.json();
 
-    if (!response.ok ||
-        !['ok', 'not found'].includes(result.result)) {
+    if (
+      !response.ok ||
+      !['ok', 'not found'].includes(result.result)
+    ) {
       throw new Error(
         'Cloudinary destroy: ' +
         JSON.stringify(result).slice(0, 300)
@@ -212,7 +235,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     }
   }
 
-  // LISTAR FOTOS E VIDEOS
+  // LISTAR FOTOS E VÍDEOS
   app.get('/api/gallery', async (req, res) => {
     try {
       res.set('Cache-Control', 'no-store');
@@ -221,7 +244,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
       if (category && !categories.includes(category)) {
         return res.status(400).json({
-          error: 'Categoria invalida'
+          error: 'Categoria inválida'
         });
       }
 
@@ -236,12 +259,12 @@ module.exports = function setupGallery(app, { authorized, redis }) {
       console.error('Galeria listagem:', error.message);
 
       res.status(503).json({
-        error: 'Galeria indisponivel'
+        error: 'Galeria indisponível'
       });
     }
   });
 
-  // ENVIAR FOTO OU VIDEO MP4
+  // ENVIAR FOTO OU VÍDEO MP4
   app.post(
     '/api/gallery',
     authorized,
@@ -261,7 +284,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         if (!file || count !== 1) {
           return res.status(400).json({
-            error: 'Envie somente uma foto ou um video MP4'
+            error: 'Envie somente uma foto ou um vídeo MP4'
           });
         }
 
@@ -269,7 +292,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         if (!isVideo && file.size > IMAGE_LIMIT) {
           return res.status(400).json({
-            error: 'Foto deve ter no maximo 8 MB'
+            error: 'Foto deve ter no máximo 8 MB'
           });
         }
 
@@ -318,13 +341,13 @@ module.exports = function setupGallery(app, { authorized, redis }) {
         console.error('Galeria upload:', error.message);
 
         res.status(503).json({
-          error: 'Nao foi possivel publicar o arquivo'
+          error: 'Não foi possível publicar o arquivo'
         });
       }
     }
   );
 
-  // ADICIONAR VIDEO DO YOUTUBE
+  // ADICIONAR VÍDEO DO YOUTUBE
   app.post(
     '/api/gallery/youtube',
     authorized,
@@ -339,7 +362,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         if (!id) {
           return res.status(400).json({
-            error: 'Link do YouTube invalido'
+            error: 'Link do YouTube inválido'
           });
         }
 
@@ -367,13 +390,13 @@ module.exports = function setupGallery(app, { authorized, redis }) {
         console.error('Galeria YouTube:', error.message);
 
         res.status(503).json({
-          error: 'Nao foi possivel publicar o link'
+          error: 'Não foi possível publicar o link'
         });
       }
     }
   );
 
-  // EXCLUIR FOTO OU VIDEO
+  // EXCLUIR FOTO OU VÍDEO
   app.delete(
     '/api/gallery/:id',
     authorized,
@@ -383,7 +406,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         if (!/^[a-f0-9-]{36}$/.test(id)) {
           return res.status(400).json({
-            error: 'ID invalido'
+            error: 'ID inválido'
           });
         }
 
@@ -391,7 +414,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         if (!raw) {
           return res.status(404).json({
-            error: 'Publicacao nao encontrada'
+            error: 'Publicação não encontrada'
           });
         }
 
@@ -410,10 +433,10 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
         res.json({ ok: true });
       } catch (error) {
-        console.error('Galeria exclusao:', error.message);
+        console.error('Galeria exclusão:', error.message);
 
         res.status(503).json({
-          error: 'Nao foi possivel excluir'
+          error: 'Não foi possível excluir'
         });
       }
     }
@@ -425,7 +448,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
       req.path.startsWith('/api/gallery') &&
       (
         err instanceof multer.MulterError ||
-        err.message?.startsWith('Formato invalido')
+        err.message?.startsWith('Formato inválido')
       )
     ) {
       return res.status(400).json({
@@ -438,4 +461,5 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     next(err);
   });
 };
+
 
