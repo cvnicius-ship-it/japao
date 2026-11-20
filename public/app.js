@@ -25,4 +25,4 @@ async function memberRequest(url,method,body){
  try{const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const data=await r.json();if(!r.ok)throw Error(data.error||'Erro ao salvar');$('memberMsg').textContent='Alteração salva!';resetMemberForm();await showAdmin();await load();}
  catch(e){$('memberMsg').textContent=e.message}
 }
-$('memberForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('editId').value;await memberRequest(id?`/api/admin/members/${id}`:'/api/admin/members',i
+$('memberForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('editId').value;await memberRequest(id?`/api/admin/members/${id}`:'/api/admin/members',id?'PUT':'POST',{name:$('memberName').value,tag:$('memberTag').value,role:$('memberRole').value,status:$('memberStatus').value})});
