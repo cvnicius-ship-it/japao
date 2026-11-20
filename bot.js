@@ -184,6 +184,74 @@ async function pollTwitch() {
     }
   } finally { polling = false; }
 }
+
+// Monitoramento experimental de TikTok via biblioteca nao oficial.
+// Falhas de rede ou bloqueios NAO mudam o status para offline.
+let checkingTikTok = false;
+const tiktokObservations = new Map();
+async function pollTikTok() {
+  if (checkingTikTok) return;
+  checkingTikTok = true;
+  try {
+    let TikTokLiveConnection;
+    try {
+      ({ TikTokLiveConnection } = require('tiktok-live-connector'));
+    } catch (error) {
+      console.error('TikTok automatico indisponivel: execute npm install tiktok-live-connector');
+      return;
+    }
+    const items = read().filter(x => x.platform === 'TikTok');
+    for (const item of items) {
+      const key = item.discordId + ':TikTok';
+      try {
+        const username = channelHandle('TikTok', item.channel).replace(/^@/, '');
+        if (!/^[a-zA-Z0-9._]{2,24}$/.test(username)) continue;
+        const connection = new TikTokLiveConnection(username, { enableExtendedGiftInfo: false });
+        const info = await Promise.race([
+          connection.fetchRoomInfo(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Tempo esgotado')), 12000))
+        ]);
+        // Status 2 = sala transmitindo; 4 = sala encerrada.
+        // Outros status sao inconclusivos e nao alteram o site.
+        const status = Number(info?.status ?? info?.roomInfo?.status);
+        if (status !== 2 && status !== 4) {
+          console.log('TikTok status inconclusivo:', username, status);
+          continue;
+        }
+        const isLive = status === 2;
+        const previous = tiktokObservations.get(key);
+        const count = previous?.value === isLive ? previous.count + 1 : 1;
+        tiktokObservations.set(key, { value: isLive, count });
+        // Duas verificacoes consecutivas evitam alternancias por respostas temporarias.
+        if (count < 2) continue;
+        const current = read().find(x => x.discordId === item.discordId && x.platform === 'TikTok' && x.channel === item.channel);
+        if (!current || current.live === isLive) continue;
+        await siteSync('PATCH', '/status', {
+          discordId: current.discordId, platform: 'TikTok', live: isLive,
+          lastAnnounced: isLive ? String(Date.now()) : ''
+        });
+        const latest = read();
+        const target = latest.find(x => x.discordId === current.discordId && x.platform === 'TikTok' && x.channel === current.channel);
+        if (!target) continue;
+        target.live = isLive;
+        target.lastAnnounced = isLive ? String(Date.now()) : '';
+        target.lastManual = 0;
+        write(latest);
+        console.log('TikTok', username, isLive ? 'AO VIVO' : 'OFFLINE');
+        if (isLive) {
+          try { await announce(target); }
+          catch (err) { console.error('Nao foi possivel anunciar TikTok:', err.message); }
+        }
+      } catch (error) {
+        console.error('TikTok: nao foi possivel verificar', channelHandle('TikTok', item.channel), error.message);
+        tiktokObservations.delete(key);
+      }
+    }
+  } finally {
+    checkingTikTok = false;
+  }
+}
+
 client.once(Events.ClientReady, async () => {
   console.log('Bot conectado:', client.user.tag);
   try {
@@ -194,8 +262,9 @@ client.once(Events.ClientReady, async () => {
   } catch (e) { console.error('Erro ao registrar comandos:', e); }
   pollTwitch().catch(console.error);
   setInterval(() => pollTwitch().catch(console.error), 120000);
+  pollTikTok().catch(console.error);
+  setInterval(() => pollTikTok().catch(console.error), 60000);
 });
 client.on('error', e => console.error('Erro do Discord:', e));
 if (!process.env.DISCORD_BOT_TOKEN) { console.error('Configure DISCORD_BOT_TOKEN no .env'); process.exit(1); }
 client.login(process.env.DISCORD_BOT_TOKEN).catch(e => { console.error('Falha ao conectar bot:', e.message); process.exitCode = 1; });
-
