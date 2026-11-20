@@ -1,45 +1,304 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Galeria | Tropa do Japão</title>
 <style>
-:root{color-scheme:dark;--bg:#09090d;--card:#15151b;--red:#ed253b;--muted:#a4a4af}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f7f7f9;font-family:Arial,Helvetica,sans-serif}header{border-bottom:1px solid #24242b;padding:23px max(24px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;align-items:center;gap:12px}a{color:inherit;text-decoration:none}.brand{font-weight:900;letter-spacing:2px}.brand span{color:var(--red)}main{max-width:1180px;margin:70px auto;padding:0 24px}small{color:var(--red);letter-spacing:4px;font-weight:bold}.heading{font-size:clamp(32px,5vw,58px);font-weight:900;margin:12px 0}.heading span{color:var(--red)}p{color:var(--muted)}.categories{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:42px 0}.cat{cursor:pointer;text-align:left;border:1px solid #32323a;background:linear-gradient(135deg,#2d1820,#111116);color:white;min-height:165px;padding:24px;display:flex;flex-direction:column;justify-content:end;transition:.2s}.cat:hover,.cat.active{border-color:var(--red);transform:translateY(-2px)}.cat strong{font-size:23px}.cat em{font-style:normal;color:var(--red);font-size:11px;letter-spacing:2px;margin-bottom:8px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin:36px 0 22px}button{cursor:pointer}.primary{background:var(--red);color:white;border:0;padding:13px 18px;font-weight:800}.secondary{background:#23232b;color:white;border:1px solid #444;padding:10px 14px}.photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.photo{background:var(--card);border:1px solid #2c2c34;overflow:hidden}.photo img,.photo video,.photo iframe{width:100%;height:230px;object-fit:cover;display:block}.photo img{cursor:zoom-in}.photo video{background:#000}.photo iframe{border:0}.media-label{font-size:11px;color:#ed253b;letter-spacing:1px;margin-top:6px}.photo .info{padding:16px;display:flex;justify-content:space-between;gap:8px;align-items:center}.photo strong{overflow-wrap:anywhere}.photo small{letter-spacing:0}.empty{grid-column:1/-1;text-align:center;border:1px dashed #42424a;padding:60px 16px;color:var(--muted)}.panel{background:#15151b;border:1px solid #34343b;padding:24px;margin:25px 0}.panel label{display:block;margin:12px 0 5px;color:#ccc}.panel input,.panel select{display:block;width:100%;background:#0d0d12;color:white;border:1px solid #484850;padding:12px}.panel button{margin-top:16px}.hidden{display:none!important}.overlay{position:fixed;inset:0;background:#000e;z-index:10;display:flex;align-items:center;justify-content:center;padding:30px}.overlay img{max-width:100%;max-height:90vh;object-fit:contain}.close{position:absolute;right:22px;top:18px;font-size:30px;background:none;border:0;color:white}#message{color:#ff9fa9}footer{text-align:center;color:#888;padding:50px 20px}@media(max-width:720px){main{margin-top:38px}.categories{grid-template-columns:1fr}.cat{min-height:110px}.photos{grid-template-columns:repeat(2,minmax(0,1fr))}.photo img,.photo video,.photo iframe{height:160px}}@media(max-width:450px){.photos{grid-template-columns:1fr}.photo img,.photo video,.photo iframe{height:230px}}
+:root {
+  color-scheme: dark;
+  --bg: #09090d;
+  --card: #15151b;
+  --red: #ed253b;
+  --muted: #a4a4af;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #f7f7f9;
+  font-family: Arial, Helvetica, sans-serif;
+}
+a { color: inherit; text-decoration: none; }
+header {
+  border-bottom: 1px solid #24242b;
+  padding: 23px max(24px,calc((100vw - 1180px)/2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.brand { font-weight: 900; letter-spacing: 2px; }
+.brand span { color: var(--red); }
+main { max-width: 1180px; margin: 70px auto; padding: 0 24px; }
+small { color: var(--red); letter-spacing: 4px; font-weight: bold; }
+.heading {
+  font-size: clamp(32px,5vw,58px);
+  font-weight: 900;
+  margin: 12px 0;
+}
+.heading span { color: var(--red); }
+p { color: var(--muted); }
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 16px;
+  margin: 42px 0;
+}
+.cat {
+  cursor: pointer;
+  text-align: left;
+  border: 1px solid #32323a;
+  background: linear-gradient(135deg,#2d1820,#111116);
+  color: white;
+  min-height: 165px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  transition: .2s;
+}
+.cat:hover, .cat.active {
+  border-color: var(--red);
+  transform: translateY(-2px);
+}
+.cat strong { font-size: 23px; }
+.cat em {
+  font-style: normal;
+  color: var(--red);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 36px 0 22px;
+}
+button { cursor: pointer; }
+.primary {
+  background: var(--red);
+  color: white;
+  border: 0;
+  padding: 13px 18px;
+  font-weight: 800;
+}
+.secondary {
+  background: #23232b;
+  color: white;
+  border: 1px solid #444;
+  padding: 10px 14px;
+}
+.photos {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 18px;
+}
+.photo {
+  background: var(--card);
+  border: 1px solid #2c2c34;
+  overflow: hidden;
+}
+.photo img, .photo video, .photo iframe {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  display: block;
+}
+.photo img { cursor: zoom-in; }
+.photo video { background: #000; }
+.photo iframe { border: 0; }
+.media-label {
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+.photo .info {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.photo strong { overflow-wrap: anywhere; }
+.photo small { letter-spacing: 0; }
+.empty {
+  grid-column: 1/-1;
+  text-align: center;
+  border: 1px dashed #42424a;
+  padding: 60px 16px;
+  color: var(--muted);
+}
+.panel {
+  background: #15151b;
+  border: 1px solid #34343b;
+  padding: 24px;
+  margin: 25px 0;
+}
+.panel label {
+  display: block;
+  margin: 12px 0 5px;
+  color: #ccc;
+}
+.panel input, .panel select {
+  display: block;
+  width: 100%;
+  background: #0d0d12;
+  color: white;
+  border: 1px solid #484850;
+  padding: 12px;
+}
+.panel button { margin-top: 16px; }
+.hidden { display: none !important; }
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #000e;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+.overlay img {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+}
+.close {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  font-size: 30px;
+  background: none;
+  border: 0;
+  color: white;
+}
+#message { color: #ff9fa9; }
+footer {
+  text-align: center;
+  color: #888;
+  padding: 50px 20px;
+}
+@media(max-width:720px) {
+  main { margin-top: 38px; }
+  .categories { grid-template-columns: 1fr; }
+  .cat { min-height: 110px; }
+  .photos { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .photo img, .photo video, .photo iframe { height: 160px; }
+}
+@media(max-width:450px) {
+  .photos { grid-template-columns: 1fr; }
+  .photo img, .photo video, .photo iframe { height: 230px; }
+}
 </style>
 </head>
 <body>
-<header><a href="/" class="brand">TROPA DO <span>JAPÃO 🇯🇵</span></a><a href="/">← Voltar ao site</a></header>
+
+<header>
+  <a href="/" class="brand">TROPA DO <span>JAPÃO 🇯🇵</span></a>
+  <a href="/">← Voltar ao site</a>
+</header>
+
 <main>
-<small>MELHORES MOMENTOS</small>
-<h1 class="heading">NOSSA <span>GALERIA</span></h1>
-<p>Fotos, vídeos e histórias construídas dentro da cidade.</p>
-<div class="categories">
-  <button class="cat" data-category="Eventos"><em>EVENTOS</em><strong>Encontro da tropa</strong></button>
-  <button class="cat" data-category="Veículos"><em>VEÍCULOS</em><strong>Garagem da facção</strong></button>
-  <button class="cat" data-category="Roleplay"><em>ROLEPLAY</em><strong>Noite na cidade</strong></button>
+  <small>MELHORES MOMENTOS</small>
+  <h1 class="heading">NOSSA <span>GALERIA</span></h1>
+  <p>Fotos, vídeos e histórias construídas dentro da cidade.</p>
+
+  <div class="categories">
+    <button class="cat" data-category="Eventos">
+      <em>EVENTOS</em>
+      <strong>Momentos do Japão X Tiro</strong>
+    </button>
+
+    <button class="cat" data-category="Veículos">
+      <em>VEÍCULOS</em>
+      <strong>Garagem da facção</strong>
+    </button>
+
+    <button class="cat" data-category="Roleplay">
+      <em>ROLEPLAY</em>
+      <strong>Noite na cidade</strong>
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div>
+      <small>MÍDIAS DA FACÇÃO</small>
+      <h2 id="sectionTitle">Escolha uma categoria</h2>
+    </div>
+    <button class="primary hidden" id="uploadToggle">
+      + PUBLICAR MÍDIA
+    </button>
+  </div>
+
+  <section id="uploadPanel" class="panel hidden">
+    <h3>Publicar foto, MP4 ou YouTube</h3>
+    <form id="uploadForm">
+      <label for="title">Título</label>
+      <input id="title" name="title" maxlength="80"
+        minlength="2" required placeholder="Ex.: Momento da tropa">
+
+      <label for="category">Categoria</label>
+      <select id="category" name="category">
+        <option>Eventos</option>
+        <option>Veículos</option>
+        <option>Roleplay</option>
+      </select>
+
+      <label for="mediaType">Tipo de publicação</label>
+      <select id="mediaType">
+        <option value="image">Foto (JPG, PNG, WEBP)</option>
+        <option value="video">Vídeo MP4</option>
+        <option value="youtube">Link do YouTube</option>
+      </select>
+
+      <div id="fileFields">
+        <label for="media">Arquivo (foto até 8 MB; MP4 até 50 MB)</label>
+        <input id="media" name="media" type="file"
+          accept="image/jpeg,image/png,image/webp" required>
+      </div>
+
+      <div id="youtubeFields" class="hidden">
+        <label for="youtubeUrl">Link do YouTube</label>
+        <input id="youtubeUrl" type="url"
+          placeholder="https://www.youtube.com/watch?v=..."
+          autocomplete="off">
+      </div>
+
+      <button class="primary" type="submit" id="submitMedia">
+        PUBLICAR FOTO
+      </button>
+    </form>
+    <p id="message" role="status"></p>
+  </section>
+
+  <div class="photos" id="photos">
+    <div class="empty">Escolha uma categoria para ver as publicações.</div>
+  </div>
+</main>
+
+<footer>TROPA DO JAPÃO — LADO LESTE RP</footer>
+
+<div id="viewer" class="overlay hidden" role="dialog"
+  aria-label="Visualizar imagem">
+  <button id="closeViewer" class="close" aria-label="Fechar">×</button>
+  <img id="bigPhoto" alt="Foto ampliada">
 </div>
-<div class="toolbar"><div><small>MÍDIAS DA FACÇÃO</small><h2 id="sectionTitle">Escolha uma categoria</h2></div><button class="primary hidden" id="uploadToggle">+ PUBLICAR MÍDIA</button></div>
-<section id="uploadPanel" class="panel hidden">
-<h3>Publicar foto, MP4 ou YouTube</h3>
-<form id="uploadForm">
-<label for="title">Título</label><input id="title" name="title" maxlength="80" minlength="2" required placeholder="Ex.: Encontro na praça">
-<label for="category">Categoria</label><select id="category" name="category"><option>Eventos</option><option>Veículos</option><option>Roleplay</option></select>
-<label for="mediaType">Tipo de publicação</label>
-<select id="mediaType"><option value="image">Foto (JPG, PNG, WEBP)</option><option value="video">Vídeo MP4</option><option value="youtube">Link do YouTube</option></select>
-<div id="fileFields"><label for="media">Arquivo (foto até 8 MB; MP4 até 50 MB)</label><input id="media" name="media" type="file" accept="image/jpeg,image/png,image/webp" required></div>
-<div id="youtubeFields" class="hidden"><label for="youtubeUrl">Link do YouTube</label><input id="youtubeUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off"></div>
-<button class="primary" type="submit" id="submitMedia">PUBLICAR FOTO</button>
-</form><p id="message" role="status"></p>
-</section>
-<div class="photos" id="photos"><div class="empty">Escolha uma categoria para ver as publicações.</div></div>
-</main><footer>TROPA DO JAPÃO — LADO LESTE RP</footer>
-<div id="viewer" class="overlay hidden" role="dialog" aria-label="Visualizar imagem"><button id="closeViewer" class="close" aria-label="Fechar">×</button><img id="bigPhoto" alt="Foto ampliada"></div>
+
 <script>
 const categories = ['Eventos','Veículos','Roleplay'];
 const params = new URLSearchParams(location.search);
-let selected = categories.includes(params.get('categoria')) ? params.get('categoria') : null;
+let selected = categories.includes(params.get('categoria'))
+  ? params.get('categoria') : null;
 let isAdmin = false;
+
 const photos = document.getElementById('photos');
 const panel = document.getElementById('uploadPanel');
 const toggle = document.getElementById('uploadToggle');
@@ -48,64 +307,111 @@ const message = document.getElementById('message');
 const mediaType = document.getElementById('mediaType');
 const mediaInput = document.getElementById('media');
 const youtubeInput = document.getElementById('youtubeUrl');
+
 function updateMediaFields() {
   const type = mediaType.value;
-  document.getElementById('fileFields').classList.toggle('hidden', type === 'youtube');
-  document.getElementById('youtubeFields').classList.toggle('hidden', type !== 'youtube');
+  document.getElementById('fileFields').classList.toggle(
+    'hidden', type === 'youtube'
+  );
+  document.getElementById('youtubeFields').classList.toggle(
+    'hidden', type !== 'youtube'
+  );
   mediaInput.required = type !== 'youtube';
   youtubeInput.required = type === 'youtube';
-  mediaInput.accept = type === 'video' ? 'video/mp4' : 'image/jpeg,image/png,image/webp';
+  mediaInput.accept = type === 'video'
+    ? 'video/mp4' : 'image/jpeg,image/png,image/webp';
   mediaInput.value = '';
-  document.getElementById('submitMedia').textContent = type === 'youtube' ? 'ADICIONAR YOUTUBE' : type === 'video' ? 'ENVIAR MP4' : 'PUBLICAR FOTO';
+  document.getElementById('submitMedia').textContent =
+    type === 'youtube' ? 'ADICIONAR YOUTUBE'
+    : type === 'video' ? 'ENVIAR MP4' : 'PUBLICAR FOTO';
   message.textContent = '';
 }
+
 mediaType.addEventListener('change', updateMediaFields);
 updateMediaFields();
+
 async function request(url, options) {
   const response = await fetch(url, options);
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Falha na requisicao');
+  if (!response.ok) {
+    throw new Error(data.error || 'Falha na requisição');
+  }
   return data;
 }
+
 async function loadSession() {
   try {
     const data = await request('/api/session');
     isAdmin = !!data.authenticated;
     toggle.classList.toggle('hidden', !isAdmin);
-  } catch { isAdmin = false; }
+  } catch {
+    isAdmin = false;
+  }
 }
+
 function showImage(url, title) {
   const viewer = document.getElementById('viewer');
   const img = document.getElementById('bigPhoto');
-  img.src = url; img.alt = title; viewer.classList.remove('hidden');
+  img.src = url;
+  img.alt = title;
+  viewer.classList.remove('hidden');
 }
-function closeImage() { document.getElementById('viewer').classList.add('hidden'); }
+
+function closeImage() {
+  document.getElementById('viewer').classList.add('hidden');
+}
 document.getElementById('closeViewer').onclick = closeImage;
-document.getElementById('viewer').addEventListener('click', e => { if (e.target.id === 'viewer') closeImage(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImage(); });
+document.getElementById('viewer').addEventListener('click', e => {
+  if (e.target.id === 'viewer') closeImage();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeImage();
+});
+
 async function loadPhotos() {
-  document.querySelectorAll('.cat').forEach(btn => btn.classList.toggle('active', btn.dataset.category === selected));
-  document.getElementById('sectionTitle').textContent = selected || 'Todas as publicações';
+  document.querySelectorAll('.cat').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.category === selected);
+  });
+
+  const categoryNames = {
+    Eventos: 'Momentos do Japão X Tiro',
+    'Veículos': 'Garagem da facção',
+    Roleplay: 'Noite na cidade'
+  };
+
+  document.getElementById('sectionTitle').textContent =
+    categoryNames[selected] || 'Todas as publicações';
+
   photos.replaceChildren();
+
   try {
-    const url = '/api/gallery' + (selected ? '?category=' + encodeURIComponent(selected) : '');
+    const url = '/api/gallery' +
+      (selected ? '?category=' + encodeURIComponent(selected) : '');
     const { items } = await request(url);
+
     if (!items.length) {
-      const empty = document.createElement('div'); empty.className = 'empty';
+      const empty = document.createElement('div');
+      empty.className = 'empty';
       empty.textContent = 'Ainda não há publicações nesta categoria.';
-      photos.append(empty); return;
+      photos.append(empty);
+      return;
     }
+
     for (const item of items) {
-      const card = document.createElement('article'); card.className = 'photo';
+      const card = document.createElement('article');
+      card.className = 'photo';
       let media;
+
       if (item.type === 'youtube') {
-        const videoId = item.youtubeId || new URL(item.url).searchParams.get('v');
+        const videoId = item.youtubeId ||
+          new URL(item.url).searchParams.get('v');
         if (!/^[A-Za-z0-9_-]{11}$/.test(videoId || '')) continue;
         media = document.createElement('iframe');
         media.src = 'https://www.youtube-nocookie.com/embed/' + videoId;
         media.title = item.title;
         media.loading = 'lazy';
-        media.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        media.allow =
+          'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
         media.allowFullscreen = true;
       } else if (item.type === 'video') {
         media = document.createElement('video');
@@ -120,44 +426,78 @@ async function loadPhotos() {
         media.loading = 'lazy';
         media.onclick = () => showImage(item.url, item.title);
       }
-      const info = document.createElement('div'); info.className = 'info';
+
+      const info = document.createElement('div');
+      info.className = 'info';
       const text = document.createElement('div');
-      const title = document.createElement('strong'); title.textContent = item.title;
-      const cat = document.createElement('div'); cat.textContent = item.category; cat.style.color = '#aaa'; cat.style.marginTop = '5px';
-      const typeLabel = document.createElement('div'); typeLabel.className = 'media-label';
-      typeLabel.textContent = item.type === 'youtube' ? 'YOUTUBE' : item.type === 'video' ? 'VÍDEO MP4' : 'FOTO';
-      text.append(title, cat, typeLabel); info.append(text);
+      const title = document.createElement('strong');
+      title.textContent = item.title;
+      const cat = document.createElement('div');
+      cat.textContent = item.category;
+      cat.style.color = '#aaa';
+      cat.style.marginTop = '5px';
+      const typeLabel = document.createElement('div');
+      typeLabel.className = 'media-label';
+      typeLabel.textContent = item.type === 'youtube'
+        ? 'YOUTUBE' : item.type === 'video' ? 'VÍDEO MP4' : 'FOTO';
+
+      text.append(title, cat, typeLabel);
+      info.append(text);
+
       if (isAdmin) {
-        const del = document.createElement('button'); del.className = 'secondary'; del.textContent = 'Excluir';
+        const del = document.createElement('button');
+        del.className = 'secondary';
+        del.textContent = 'Excluir';
         del.onclick = async () => {
           if (!confirm('Excluir esta publicação permanentemente?')) return;
-          try { await request('/api/gallery/' + encodeURIComponent(item.id), { method: 'DELETE' }); await loadPhotos(); }
-          catch (e) { alert(e.message); }
+          try {
+            await request(
+              '/api/gallery/' + encodeURIComponent(item.id),
+              { method: 'DELETE' }
+            );
+            await loadPhotos();
+          } catch (e) {
+            alert(e.message);
+          }
         };
         info.append(del);
       }
-      card.append(media, info); photos.append(card);
+
+      card.append(media, info);
+      photos.append(card);
     }
   } catch (e) {
-    const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = e.message; photos.append(empty);
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = e.message;
+    photos.append(empty);
   }
 }
-document.querySelectorAll('.cat').forEach(btn => btn.addEventListener('click', () => {
-  selected = btn.dataset.category;
-  history.replaceState(null, '', '?categoria=' + encodeURIComponent(selected));
-  document.getElementById('category').value = selected;
-  loadPhotos();
-}));
+
+document.querySelectorAll('.cat').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selected = btn.dataset.category;
+    history.replaceState(
+      null, '', '?categoria=' + encodeURIComponent(selected)
+    );
+    document.getElementById('category').value = selected;
+    loadPhotos();
+  });
+});
+
 toggle.onclick = () => panel.classList.toggle('hidden');
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const submit = form.querySelector('button[type=submit]');
   submit.disabled = true;
   message.textContent = 'Publicando...';
+
   try {
     const type = mediaType.value;
     let url = '/api/gallery';
     let options;
+
     if (type === 'youtube') {
       url = '/api/gallery/youtube';
       options = {
@@ -171,21 +511,46 @@ form.addEventListener('submit', async e => {
       };
     } else {
       const file = mediaInput.files[0];
-      const limit = type === 'video' ? 50 * 1024 * 1024 : 8 * 1024 * 1024;
-      if (!file || file.size > limit) throw new Error('Escolha um arquivo de até ' + (type === 'video' ? '50' : '8') + ' MB');
-      if (type === 'video' && file.type !== 'video/mp4') throw new Error('Selecione um vídeo MP4');
-      if (type === 'image' && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Selecione JPG, PNG ou WEBP');
-      options = { method: 'POST', body: new FormData(form) };
+      const limit = type === 'video'
+        ? 50 * 1024 * 1024 : 8 * 1024 * 1024;
+      if (!file || file.size > limit) {
+        throw new Error('Escolha um arquivo de até ' +
+          (type === 'video' ? '50' : '8') + ' MB');
+      }
+      if (type === 'video' && file.type !== 'video/mp4') {
+        throw new Error('Selecione um vídeo MP4');
+      }
+      if (type === 'image' &&
+          !['image/jpeg','image/png','image/webp'].includes(file.type)) {
+        throw new Error('Selecione JPG, PNG ou WEBP');
+      }
+      options = {
+        method: 'POST',
+        body: new FormData(form)
+      };
     }
+
     await request(url, options);
     selected = document.getElementById('category').value;
-    history.replaceState(null, '', '?categoria=' + encodeURIComponent(selected));
-    form.reset(); updateMediaFields(); panel.classList.add('hidden');
+    history.replaceState(
+      null, '', '?categoria=' + encodeURIComponent(selected)
+    );
+    form.reset();
+    updateMediaFields();
+    panel.classList.add('hidden');
     await loadPhotos();
-  } catch (err) { message.textContent = err.message; }
-  finally { submit.disabled = false; }
+  } catch (err) {
+    message.textContent = err.message;
+  } finally {
+    submit.disabled = false;
+  }
 });
 
-(async () => { await loadSession(); await loadPhotos(); })();
+(async () => {
+  await loadSession();
+  await loadPhotos();
+})();
 </script>
-</body></html>
+</body>
+</html>
+
