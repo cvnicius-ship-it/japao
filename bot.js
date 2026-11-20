@@ -91,25 +91,38 @@ client.on(Events.InteractionCreate, async i => {
       const item = items.find(x => x.discordId === uid && x.platform === platform);
       if (!item) return await i.editReply('Cadastre seu canal primeiro com /live cadastrar.');
       const now = Date.now();
-      if (item.lastManual && now - item.lastManual < 60 * 60 * 1000) return await i.editReply('Você já anunciou esta plataforma na última hora.');
-      await announce(item);
-      item.lastManual = now;
-      // Marcacao manual: usuario declara que esta ao vivo; TikTok nao e verificado automaticamente.
+
+      // Se o site ainda esta offline, permite tentar novamente sem esperar uma hora.
+      if (item.live && item.lastManual && now - item.lastManual < 60 * 60 * 1000) {
+        return await i.editReply('Seu canal ja foi marcado AO VIVO. Use /live encerrar quando terminar.');
+      }
+
+      // Primeiro confirma no servidor: nao diz que esta ao vivo se a API falhar.
+      await siteSync('PATCH', '/status', {
+        discordId: uid,
+        platform,
+        live: true,
+        lastAnnounced: String(now)
+      });
       item.live = true;
+      item.lastManual = now;
+      item.lastAnnounced = String(now);
       write(items);
+
+      // Se a mensagem falhar, o status continua correto no site.
       try {
-        await siteSync('PATCH', '/status', { discordId: uid, platform, live: true });
-        return await i.editReply('Anuncio enviado! Seu canal foi marcado AO VIVO no site. Use /live encerrar ao terminar.');
+        await announce(item);
+        return await i.editReply('🔴 Live anunciada no Discord e marcada AO VIVO no site! Use /live encerrar ao terminar.');
       } catch (err) {
-        console.error('Falha sincronizando anuncio:', err);
-        return await i.editReply('Anuncio enviado no Discord, mas o site nao atualizou: ' + err.message.slice(0, 150));
+        console.error('Falha enviando aviso no Discord:', err);
+        return await i.editReply('🔴 O site foi atualizado para AO VIVO, mas nao consegui publicar o aviso no canal do Discord.');
       }
     }
     if (sub === 'encerrar') {
       const item = items.find(x => x.discordId === uid && x.platform === platform);
       if (!item) return await i.editReply('Cadastre seu canal primeiro com /live cadastrar.');
-      await siteSync('PATCH', '/status', { discordId: uid, platform, live: false });
-      item.live = false; item.lastAnnounced = '';
+      await siteSync('PATCH', '/status', { discordId: uid, platform, live: false, lastAnnounced: '' });
+      item.live = false; item.lastAnnounced = ''; item.lastManual = 0;
       write(items);
       return await i.editReply('Canal marcado OFFLINE no site. O cadastro continua visivel.');
     }
@@ -185,3 +198,4 @@ client.once(Events.ClientReady, async () => {
 client.on('error', e => console.error('Erro do Discord:', e));
 if (!process.env.DISCORD_BOT_TOKEN) { console.error('Configure DISCORD_BOT_TOKEN no .env'); process.exit(1); }
 client.login(process.env.DISCORD_BOT_TOKEN).catch(e => { console.error('Falha ao conectar bot:', e.message); process.exitCode = 1; });
+
