@@ -65,7 +65,8 @@ function botAuthorized(req, res, next) {
 }
 function validStream(input) {
   if (!input || typeof input !== 'object') return false;
-  const { discordId, name, platform, channel } = input;
+  const { discordId, name, platform, channel, channelName } = input;
+  if (channelName !== undefined && (typeof channelName !== 'string' || !channelName.trim() || channelName.length > 80)) return false;
   if (!/^\d{15,22}$/.test(String(discordId || '')) || typeof name !== 'string' || !name.trim() || name.length > 80) return false;
   const hosts = { Twitch: ['twitch.tv','www.twitch.tv'], YouTube: ['youtube.com','www.youtube.com','m.youtube.com','youtu.be'], TikTok: ['tiktok.com','www.tiktok.com','m.tiktok.com'] };
   if (!hosts[platform] || typeof channel !== 'string' || channel.length > 500) return false;
@@ -75,11 +76,11 @@ const streamField = (id, platform) => `${id}:${platform}`;
 app.post('/api/bot/streams', botAuthorized, async (req, res) => {
   if (!validStream(req.body)) return res.status(400).json({ error: 'Dados de canal inválidos' });
   try {
-    const { discordId, name, platform, channel } = req.body;
+    const { discordId, name, platform, channel, channelName } = req.body;
     const field = streamField(discordId, platform);
     const previous = await redis('HGET', STREAMS_KEY, field);
     const old = previous ? JSON.parse(previous) : {};
-    const item = { discordId, name: name.trim(), platform, channel, live: old.channel === channel && old.live === true, lastAnnounced: old.channel === channel ? (old.lastAnnounced || '') : '' };
+    const item = { discordId, name: name.trim(), channelName: (channelName || name).trim(), platform, channel, live: old.channel === channel && old.live === true, lastAnnounced: old.channel === channel ? (old.lastAnnounced || '') : '' };
     await redis('HSET', STREAMS_KEY, field, JSON.stringify(item));
     res.json({ ok: true });
   } catch (err) { console.error('Falha salvando canal:', err.message); res.status(503).json({ error: 'Banco de canais indisponível' }); }
