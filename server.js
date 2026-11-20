@@ -26,7 +26,19 @@ const gallery = [
 app.disable('x-powered-by');
 app.use(express.json({limit:'20kb'}));
 app.use(express.urlencoded({extended:false}));
-app.use(session({secret:process.env.SESSION_SECRET || 'dev-only-change-me',resave:false,saveUninitialized:false,cookie:{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:1000*60*60*8}}));
+app.set('trust proxy', 1);
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'dev-only-change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 8
+    }
+}));
 app.use(express.static(path.join(__dirname,'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
