@@ -1,515 +1,1116 @@
 
+// ==========================================
+// TROPA DO JAPAO - APP.JS
+// PARTE 1 - SITE PUBLICO
+// ==========================================
+
+// Selecionar elemento pelo ID
 const $ = id => document.getElementById(id);
 
+// Criar elementos HTML com seguranca
 const el = (tag, className = '', text) => {
   const element = document.createElement(tag);
 
-  if (className) element.className = className;
-  if (text !== undefined) element.textContent = text;
+  if (className) {
+    element.className = className;
+  }
+
+  if (text !== undefined) {
+    element.textContent = String(text);
+  }
 
   return element;
 };
 
-// Menu
-$('menuBtn')?.addEventListener('click', () => {
-  $('navLinks')?.classList.toggle('open');
-});
+// ==========================================
+// CONFIGURACOES
+// ==========================================
 
-document.querySelectorAll('#navLinks a').forEach(a => {
-  a.addEventListener('click', () => {
-    $('navLinks')?.classList.remove('open');
-  });
-});
+const UPDATE_INTERVAL = 15000;
 
-// Cargos disponíveis no site
-const memberRoles = [
-  'Líder',
-  'Sub Líder',
-  'Gerente Geral',
-  'Gerente de Vendas',
-  'Gerente de Recrutamento',
-  'Gerente de Farm',
-  'Gerente Elite',
-  'Elite',
-  'Membro'
-];
-
-// Compatibilidade com cargos antigos
-const legacyMemberRoles = {
-  'Sublíder': 'Sub Líder',
-  'Gerente': 'Gerente Geral'
+let publicData = {
+  members: [],
+  streams: [],
+  gallery: []
 };
 
-// Atualizar seleção de cargos
-const roleSelect = $('memberRole');
+let currentMembers = [];
+let publicLoading = false;
 
-if (roleSelect) {
-  roleSelect.replaceChildren();
+// ==========================================
+// MENU DO SITE
+// ==========================================
 
-  for (const role of memberRoles) {
-    const option = document.createElement('option');
-    option.value = role;
-    option.textContent = role;
-    roleSelect.append(option);
+const menuBtn = $('menuBtn');
+const navLinks = $('navLinks');
+
+if (menuBtn && navLinks) {
+  menuBtn.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+  });
+
+  document
+    .querySelectorAll('#navLinks a')
+    .forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+      });
+    });
+}
+
+// ==========================================
+// FUNCOES AUXILIARES
+// ==========================================
+
+function isOnline(member) {
+  return String(member.status || '')
+    .toLowerCase() === 'online';
+}
+
+function safeText(value, fallback = '') {
+  const result = String(value ?? '').trim();
+
+  return result || fallback;
+}
+
+function setText(id, value) {
+  const element = $(id);
+
+  if (element) {
+    element.textContent = String(value);
   }
 }
 
-// Carregar membros, lives e galeria
+// ==========================================
+// RENDERIZAR MEMBROS
+// ==========================================
+
+function renderMembers(members) {
+  const grid = $('membersGrid');
+
+  if (!grid) return;
+
+  grid.replaceChildren();
+
+  if (!members.length) {
+    grid.append(
+      el('p', 'hint', 'Nenhum membro cadastrado.')
+    );
+
+    return;
+  }
+
+  for (const member of members) {
+    const online = isOnline(member);
+
+    const card = el('article', 'member-card');
+
+    // Retrato
+    const portrait = el('div', 'portrait');
+
+    const avatar = el(
+      'span',
+      '',
+      safeText(
+        member.avatar,
+        safeText(member.name, '?')[0]
+      ).toUpperCase()
+    );
+
+    const roleTag = el(
+      'div',
+      'role-tag',
+      safeText(member.role, 'Membro').toUpperCase()
+    );
+
+    portrait.append(avatar, roleTag);
+
+    // Informacoes
+    const body = el('div', 'member-body');
+
+    const name = el(
+      'h3',
+      '',
+      safeText(member.name, 'Sem nome')
+    );
+
+    const tag = el(
+      'p',
+      '',
+      'ID ' + safeText(member.tag, '---')
+    );
+
+    // Rodape
+    const bottom = el('div', 'member-bottom');
+
+    const role = el(
+      'span',
+      '',
+      safeText(member.role, 'Membro')
+    );
+
+    const status = el(
+      'span',
+      online ? 'status' : 'status off',
+      online ? '● Online' : '● Offline'
+    );
+
+    // Identificador para CSS
+    card.dataset.status = online
+      ? 'online'
+      : 'offline';
+
+    bottom.append(role, status);
+
+    body.append(name, tag, bottom);
+
+    card.append(portrait, body);
+
+    grid.append(card);
+  }
+}
+
+// ==========================================
+// CONTADORES DO SITE
+// ==========================================
+
+function updateCounters(members, streams) {
+  const totalMembers = members.length;
+
+  const totalOnline = members.filter(
+    member => isOnline(member)
+  ).length;
+
+  const totalLives = streams.filter(
+    stream => stream.live === true
+  ).length;
+
+  setText(
+    'memberCount',
+    String(totalMembers).padStart(2, '0')
+  );
+
+  setText(
+    'onlineCount',
+    String(totalOnline).padStart(2, '0')
+  );
+
+  setText(
+    'liveCount',
+    String(totalLives).padStart(2, '0')
+  );
+}
+
+// ==========================================
+// VALIDAR LINKS DAS LIVES
+// ==========================================
+
+function validStreamUrl(value) {
+  try {
+    const url = new URL(value);
+
+    const allowedHosts = [
+      'twitch.tv',
+      'www.twitch.tv',
+      'youtube.com',
+      'www.youtube.com',
+      'm.youtube.com',
+      'youtu.be',
+      'tiktok.com',
+      'www.tiktok.com',
+      'm.tiktok.com'
+    ];
+
+    return (
+      url.protocol === 'https:' &&
+      allowedHosts.includes(
+        url.hostname.toLowerCase()
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+// ==========================================
+// RENDERIZAR LIVES
+// ==========================================
+
+function renderStreams(streams) {
+  const grid = $('streamsGrid');
+
+  if (!grid) return;
+
+  grid.replaceChildren();
+
+  if (!streams.length) {
+    grid.append(
+      el(
+        'p',
+        'hint',
+        'Nenhuma live cadastrada no momento.'
+      )
+    );
+
+    return;
+  }
+
+  // Mostrar primeiro quem esta AO VIVO
+  const orderedStreams = [...streams].sort(
+    (a, b) => Number(b.live) - Number(a.live)
+  );
+
+  for (const stream of orderedStreams) {
+    const live = stream.live === true;
+
+    const card = el('article', 'stream-card');
+
+    const preview = el(
+      'div',
+      'stream-preview',
+      safeText(
+        stream.platform,
+        'LIVE'
+      ).toUpperCase()
+    );
+
+    const badge = el(
+      'span',
+      live
+        ? 'live-badge active'
+        : 'live-badge',
+      live ? '● AO VIVO' : 'OFFLINE'
+    );
+
+    preview.append(badge);
+
+    const info = el('div', 'stream-info');
+
+    const details = el('div');
+
+    const title = el(
+      'h3',
+      '',
+      safeText(
+        stream.channelName || stream.name,
+        'Canal sem nome'
+      )
+    );
+
+    const description = el(
+      'p',
+      '',
+      safeText(stream.platform, 'Plataforma') +
+      ' • Canal do membro'
+    );
+
+    details.append(title, description);
+
+    info.append(details);
+
+    if (
+      stream.channel &&
+      validStreamUrl(stream.channel)
+    ) {
+      const link = el(
+        'a',
+        '',
+        live ? 'Assistir agora ↗' : 'Ver canal ↗'
+      );
+
+      link.href = stream.channel;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+
+      info.append(link);
+    } else {
+      info.append(
+        el('span', 'hint', 'Canal indisponível')
+      );
+    }
+
+    card.append(preview, info);
+
+    grid.append(card);
+  }
+}
+
+// ==========================================
+// RENDERIZAR GALERIA
+// ==========================================
+
+function renderGallery(gallery) {
+  const grid = $('galleryGrid');
+
+  if (!grid) return;
+
+  grid.replaceChildren();
+
+  for (const item of gallery) {
+    const card = el('article', 'gallery-item');
+
+    const type = el(
+      'span',
+      '',
+      safeText(item.type, 'Galeria').toUpperCase()
+    );
+
+    const title = el(
+      'h3',
+      '',
+      safeText(item.title, 'Sem título')
+    );
+
+    card.append(type, title);
+
+    grid.append(card);
+  }
+}
+
+// ==========================================
+// LINK DO DISCORD
+// ==========================================
+
+function updateDiscordLinks(invite) {
+  const ids = [
+    'discordLink',
+    'discordBottom'
+  ];
+
+  for (const id of ids) {
+    const link = $(id);
+
+    if (!link) continue;
+
+    if (
+      typeof invite === 'string' &&
+      /^https:\/\/discord\.(gg|com)\//i.test(invite)
+    ) {
+      link.href = invite;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    } else {
+      link.href = '#sobre';
+      link.removeAttribute('target');
+    }
+  }
+}
+
+// ==========================================
+// BUSCAR DADOS DO SITE
+// ==========================================
+
 async function load() {
+  if (publicLoading) return;
+
+  publicLoading = true;
+
   try {
     const response = await fetch('/api/public', {
       cache: 'no-store'
     });
 
     if (!response.ok) {
-      throw new Error('Erro ao carregar dados do site');
+      throw new Error(
+        'Erro ao consultar servidor: ' +
+        response.status
+      );
     }
 
     const data = await response.json();
 
-    const members = data.members || [];
-    const streams = data.streams || [];
-    const gallery = data.gallery || [];
+    const members = Array.isArray(data.members)
+      ? data.members
+      : [];
 
-    $('membersGrid').replaceChildren();
-    $('streamsGrid').replaceChildren();
-    $('galleryGrid').replaceChildren();
+    const streams = Array.isArray(data.streams)
+      ? data.streams
+      : [];
 
-    // Estatísticas
-    $('memberCount').textContent =
-      String(members.length).padStart(2, '0');
+    const gallery = Array.isArray(data.gallery)
+      ? data.gallery
+      : [];
 
-    $('onlineCount').textContent =
-      String(
-        members.filter(m => m.status === 'Online').length
-      ).padStart(2, '0');
+    publicData = {
+      members,
+      streams,
+      gallery
+    };
 
-    $('liveCount').textContent =
-      String(
-        streams.filter(s => s.live).length
-      ).padStart(2, '0');
+    renderMembers(members);
+    renderStreams(streams);
+    renderGallery(gallery);
 
-    // Link do Discord
-    if (data.discord && data.discord !== '#') {
-      for (const id of ['discordLink', 'discordBottom']) {
-        const link = $(id);
-
-        if (!link) continue;
-
-        link.href = data.discord;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-      }
-    }
-
-    // MEMBROS
-    for (const m of members) {
-      const card = el('article', 'member-card');
-      const portrait = el('div', 'portrait');
-
-      const role = legacyMemberRoles[m.role] ||
-        m.role || 'Membro';
-
-      portrait.append(
-        el('span', '', m.avatar || m.name?.[0] || '?'),
-        el('div', 'role-tag', role.toUpperCase())
-      );
-
-      const body = el('div', 'member-body');
-
-      body.append(
-        el('h3', '', m.name),
-        el('p', '', 'ID ' + m.tag)
-      );
-
-      const bottom = el('div', 'member-bottom');
-
-      bottom.append(
-        el('span', '', role),
-        el(
-          'span',
-          m.status === 'Online' ? 'status' : 'status off',
-          '● ' + m.status
-        )
-      );
-
-      body.append(bottom);
-      card.append(portrait, body);
-
-      $('membersGrid').append(card);
-    }
-
-    // LIVES
-    for (const s of streams) {
-      const card = el('article', 'stream-card');
-
-      const preview = el(
-        'div',
-        'stream-preview',
-        s.platform.toUpperCase()
-      );
-
-      preview.append(
-        el(
-          'span',
-          s.live ? 'live-badge active' : 'live-badge',
-          s.live ? '● AO VIVO' : 'OFFLINE'
-        )
-      );
-
-      const info = el('div', 'stream-info');
-      const details = el('div');
-
-      let handle = '';
-
-      try {
-        const url = new URL(s.channel);
-        const parts = url.pathname.split('/').filter(Boolean);
-
-        if (s.platform === 'TikTok') {
-          handle =
-            parts.find(part => part.startsWith('@')) ||
-            parts[0] ||
-            '';
-        } else {
-          handle = parts[0] || '';
-        }
-      } catch {
-        handle = '';
-      }
-
-      const channelTitle =
-        s.channelName ||
-        handle ||
-        s.name ||
-        'Canal';
-
-      details.append(
-        el('h3', '', channelTitle),
-        el(
-          'p',
-          '',
-          s.platform +
-            (handle ? ' • ' + handle : ' • Canal do membro')
-        )
-      );
-
-      info.append(details);
-
-      let validChannel = false;
-
-      try {
-        const url = new URL(s.channel);
-
-        const allowedHosts = [
-          'twitch.tv',
-          'www.twitch.tv',
-          'youtube.com',
-          'www.youtube.com',
-          'm.youtube.com',
-          'youtu.be',
-          'tiktok.com',
-          'www.tiktok.com',
-          'm.tiktok.com'
-        ];
-
-        validChannel =
-          url.protocol === 'https:' &&
-          allowedHosts.includes(
-            url.hostname.toLowerCase()
-          );
-      } catch {
-        validChannel = false;
-      }
-
-      if (validChannel) {
-        const link = el('a', '', 'Assistir ↗');
-
-        link.href = s.channel;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-
-        info.append(link);
-      } else {
-        info.append(
-          el('span', 'hint', 'Canal em breve')
-        );
-      }
-
-      card.append(preview, info);
-      $('streamsGrid').append(card);
-    }
-
-    // GALERIA
-    for (const g of gallery) {
-      const card = el('a', 'gallery-item');
-
-      card.href =
-        '/galeria.html?categoria=' +
-        encodeURIComponent(g.type || '');
-
-      card.setAttribute(
-        'aria-label',
-        'Abrir galeria de ' + (g.type || 'fotos')
-      );
-
-      card.append(
-        el('span', '', (g.type || '').toUpperCase()),
-        el('h3', '', g.title || '')
-      );
-
-      $('galleryGrid').append(card);
-    }
+    updateCounters(members, streams);
+    updateDiscordLinks(data.discord);
 
   } catch (error) {
-    console.error('Erro ao carregar site:', error);
+    console.error(
+      'Erro carregando site:',
+      error.message
+    );
 
-    if ($('membersGrid')) {
-      $('membersGrid').textContent =
-        'Não foi possível carregar os membros.';
+    // Nao apaga os cards em uma falha temporaria
+    if (!publicData.members.length) {
+      const grid = $('membersGrid');
+
+      if (grid) {
+        grid.textContent =
+          'Não foi possível carregar os membros.';
+      }
+    }
+  } finally {
+    publicLoading = false;
+  }
+}
+
+// ==========================================
+// ATUALIZACAO AUTOMATICA
+// ==========================================
+
+// Carregar imediatamente
+load();
+
+// Atualizar os dados a cada 15 segundos
+setInterval(() => {
+  if (!document.hidden) {
+    load();
+  }
+}, UPDATE_INTERVAL);
+
+// Atualizar ao voltar para a aba
+document.addEventListener(
+  'visibilitychange',
+  () => {
+    if (!document.hidden) {
+      load();
+    }
+  }
+);
+
+// ==========================================
+// FIM DA PARTE 1
+// COLE A PARTE 2 ABAIXO
+// ==========================================
+
+// ==========================================
+// TROPA DO JAPAO - APP.JS
+// PARTE 2 - PAINEL ADMINISTRATIVO
+// ==========================================
+
+// ==========================================
+// ADICIONAR CAMPO ID DO DISCORD
+// ==========================================
+
+function setupDiscordField() {
+  const form = $('memberForm');
+
+  if (!form || $('memberDiscordId')) {
+    return;
+  }
+
+  const label = el('label', '');
+
+  label.textContent = 'ID do Discord';
+
+  const input = el('input', '');
+
+  input.id = 'memberDiscordId';
+  input.name = 'discordId';
+  input.type = 'text';
+  input.inputMode = 'numeric';
+  input.maxLength = 22;
+  input.placeholder = 'Ex.: 123456789012345678';
+  input.autocomplete = 'off';
+
+  input.pattern = '[0-9]{15,22}';
+
+  label.append(input);
+
+  const statusField = $('memberStatus');
+
+  if (statusField) {
+    const statusLabel = statusField.closest('label');
+
+    if (statusLabel) {
+      statusLabel.insertAdjacentElement(
+        'beforebegin',
+        label
+      );
+    } else {
+      form.prepend(label);
+    }
+
+    // Status agora vem automaticamente do Discord
+    statusField.disabled = true;
+
+    const statusHint = el(
+      'small',
+      'hint',
+      'O status será atualizado pelo BOT DIV.'
+    );
+
+    statusField.insertAdjacentElement(
+      'afterend',
+      statusHint
+    );
+  } else {
+    const actions = form.querySelector('.form-actions');
+
+    if (actions) {
+      actions.insertAdjacentElement(
+        'beforebegin',
+        label
+      );
+    } else {
+      form.append(label);
     }
   }
 }
 
-// Verificar sessão do administrador
+// ==========================================
+// VERIFICAR LOGIN ADMINISTRATIVO
+// ==========================================
+
 async function sessionCheck() {
   try {
-    const response = await fetch('/api/session');
-    const data = await response.json();
+    const response = await fetch('/api/session', {
+      cache: 'no-store'
+    });
 
-    if (data.authenticated) {
+    if (!response.ok) return;
+
+    const session = await response.json();
+
+    if (session.authenticated) {
       await showAdmin();
     }
   } catch (error) {
-    console.error('Erro ao verificar sessão:', error);
-  }
-}
-
-// Mostrar painel administrativo
-async function showAdmin() {
-  const response = await fetch('/api/admin');
-
-  if (!response.ok) {
-    throw new Error('Não foi possível carregar o painel');
-  }
-
-  const data = await response.json();
-
-  $('loginForm').classList.add('hidden');
-  $('adminCard').classList.remove('hidden');
-  $('adminStats').replaceChildren();
-
-  const stats = [
-    ['Membros', data.members.length],
-    ['Lives cadastradas', data.streams.length],
-    ['Galeria', data.gallery.length]
-  ];
-
-  for (const [label, count] of stats) {
-    const item = el('div', '');
-
-    item.append(
-      el('strong', '', String(count)),
-      document.createTextNode(label)
+    console.error(
+      'Erro verificando sessao:',
+      error.message
     );
-
-    $('adminStats').append(item);
   }
-
-  renderAdminMembers(data.members);
 }
 
-// LOGIN
-$('loginForm')?.addEventListener('submit', async e => {
-  e.preventDefault();
+// ==========================================
+// CARREGAR PAINEL ADMINISTRATIVO
+// ==========================================
 
-  $('loginMsg').textContent = 'Entrando...';
-
-  const formElement = e.currentTarget;
-  const form = new FormData(formElement);
-
+async function showAdmin() {
   try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        user: form.get('user'),
-        password: form.get('password')
-      })
+    const response = await fetch('/api/admin', {
+      cache: 'no-store'
     });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        $('adminCard')?.classList.add('hidden');
+        $('loginForm')?.classList.remove('hidden');
+      }
+
+      return;
+    }
 
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        data.error || 'Falha no login'
-      );
+    const members = Array.isArray(data.members)
+      ? data.members
+      : [];
+
+    const streams = Array.isArray(data.streams)
+      ? data.streams
+      : [];
+
+    const gallery = Array.isArray(data.gallery)
+      ? data.gallery
+      : [];
+
+    $('loginForm')?.classList.add('hidden');
+    $('adminCard')?.classList.remove('hidden');
+
+    // Atualizar estatisticas
+    const stats = $('adminStats');
+
+    if (stats) {
+      stats.replaceChildren();
+
+      const items = [
+        ['Membros', members.length],
+        [
+          'Online',
+          members.filter(isOnline).length
+        ],
+        ['Lives cadastradas', streams.length],
+        ['Galeria', gallery.length]
+      ];
+
+      for (const [label, count] of items) {
+        const item = el('div', '');
+
+        item.append(
+          el('strong', '', String(count)),
+          document.createTextNode(label)
+        );
+
+        stats.append(item);
+      }
     }
 
-    $('loginMsg').textContent = '';
-    formElement.reset();
-
-    await showAdmin();
+    renderAdminMembers(members);
 
   } catch (error) {
-    $('loginMsg').textContent = error.message;
-  }
-});
-
-// SAIR DO PAINEL
-$('logoutBtn')?.addEventListener('click', async () => {
-  await fetch('/api/logout', {
-    method: 'POST'
-  });
-
-  $('adminCard').classList.add('hidden');
-  $('loginForm').classList.remove('hidden');
-});
-
-// GERENCIAR MEMBROS
-let currentMembers = [];
-
-function renderAdminMembers(members) {
-  currentMembers = members;
-  $('adminMembers').replaceChildren();
-
-  for (const m of members) {
-    const row = el('div', 'admin-member-row');
-    const info = el('div', '');
-
-    const role =
-      legacyMemberRoles[m.role] ||
-      m.role ||
-      'Membro';
-
-    info.append(
-      el('strong', '', m.name),
-      el(
-        'small',
-        '',
-        `ID ${m.tag} · ${role} · ${m.status}`
-      )
+    console.error(
+      'Erro carregando painel:',
+      error.message
     );
-
-    const actions = el('div', 'form-actions');
-
-    // Editar membro
-    const edit = el('button', 'btn ghost', 'Editar');
-    edit.type = 'button';
-
-    edit.addEventListener('click', () => {
-      $('editId').value = m.id;
-      $('memberName').value = m.name;
-      $('memberTag').value = m.tag;
-
-      $('memberRole').value =
-        legacyMemberRoles[m.role] ||
-        m.role;
-
-      $('memberStatus').value = m.status;
-
-      $('saveMember').textContent =
-        'Salvar alterações';
-
-      $('cancelEdit').classList.remove('hidden');
-      $('memberName').focus();
-    });
-
-    // Remover membro
-    const remove = el('button', 'btn ghost', 'Remover');
-    remove.type = 'button';
-
-    remove.addEventListener('click', async () => {
-      if (!confirm(`Remover ${m.name} da lista?`)) {
-        return;
-      }
-
-      await memberRequest(
-        `/api/admin/members/${m.id}`,
-        'DELETE'
-      );
-    });
-
-    actions.append(edit, remove);
-    row.append(info, actions);
-
-    $('adminMembers').append(row);
   }
 }
 
-// LIMPAR FORMULÁRIO
+// ==========================================
+// RENDERIZAR MEMBROS DO PAINEL
+// ==========================================
+
+function renderAdminMembers(members) {
+  currentMembers = members;
+
+  const container = $('adminMembers');
+
+  if (!container) return;
+
+  container.replaceChildren();
+
+  if (!members.length) {
+    container.append(
+      el('p', 'hint', 'Nenhum membro cadastrado.')
+    );
+
+    return;
+  }
+
+  for (const member of members) {
+    const online = isOnline(member);
+
+    const row = el('div', 'admin-member-row');
+
+    const info = el('div', '');
+
+    const name = el(
+      'strong',
+      '',
+      safeText(member.name, 'Sem nome')
+    );
+
+    const details = el(
+      'small',
+      '',
+      'ID ' +
+      safeText(member.tag, '---') +
+      ' · ' +
+      safeText(member.role, 'Membro')
+    );
+
+    const status = el(
+      'small',
+      online ? 'status' : 'status off',
+      online ? '● Online' : '● Offline'
+    );
+
+    const discord = el(
+      'small',
+      'hint',
+      member.discordId
+        ? 'Discord: ' + member.discordId
+        : 'Discord não vinculado'
+    );
+
+    info.append(
+      name,
+      details,
+      status,
+      discord
+    );
+
+    // Botoes
+    const actions = el('div', 'form-actions');
+
+    const edit = el(
+      'button',
+      'btn ghost',
+      'Editar'
+    );
+
+    edit.type = 'button';
+
+    edit.addEventListener('click', () => {
+      editMember(member.id);
+    });
+
+    const remove = el(
+      'button',
+      'btn ghost',
+      'Remover'
+    );
+
+    remove.type = 'button';
+
+    remove.addEventListener('click', () => {
+      removeMember(member.id);
+    });
+
+    actions.append(edit, remove);
+
+    row.append(info, actions);
+
+    container.append(row);
+  }
+}
+
+// ==========================================
+// EDITAR MEMBRO
+// ==========================================
+
+function editMember(id) {
+  const member = currentMembers.find(
+    item => Number(item.id) === Number(id)
+  );
+
+  if (!member) return;
+
+  $('editId').value = member.id;
+  $('memberName').value = member.name;
+  $('memberTag').value = member.tag;
+  $('memberRole').value = member.role;
+
+  if ($('memberDiscordId')) {
+    $('memberDiscordId').value =
+      member.discordId || '';
+  }
+
+  if ($('memberStatus')) {
+    $('memberStatus').value =
+      isOnline(member) ? 'Online' : 'Offline';
+  }
+
+  $('saveMember').textContent =
+    'Salvar alterações';
+
+  $('cancelEdit').classList.remove('hidden');
+
+  $('memberName').focus();
+
+  $('memberForm').scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+}
+
+// ==========================================
+// LIMPAR FORMULARIO
+// ==========================================
+
 function resetMemberForm() {
-  $('memberForm').reset();
+  const form = $('memberForm');
+
+  if (!form) return;
+
+  form.reset();
+
   $('editId').value = '';
 
   $('saveMember').textContent =
     'Cadastrar membro';
 
   $('cancelEdit').classList.add('hidden');
+
+  if ($('memberStatus')) {
+    $('memberStatus').value = 'Offline';
+  }
 }
 
-// CANCELAR EDIÇÃO
-$('cancelEdit')?.addEventListener(
-  'click',
-  resetMemberForm
-);
+// ==========================================
+// ENVIAR REQUISICOES DE MEMBROS
+// ==========================================
 
-// SALVAR, EDITAR OU REMOVER MEMBRO
 async function memberRequest(url, method, body) {
+  const message = $('memberMsg');
+
   try {
+    if (message) {
+      message.textContent = 'Aguarde...';
+    }
+
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json'
       },
-      ...(body ? {
-        body: JSON.stringify(body)
-      } : {})
+      ...(body
+        ? { body: JSON.stringify(body) }
+        : {})
     });
 
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
-        data.error || 'Erro ao salvar'
+        data.error || 'Erro ao salvar membro.'
       );
     }
 
-    $('memberMsg').textContent =
-      'Alteração salva!';
+    if (message) {
+      message.textContent =
+        'Alteração realizada com sucesso!';
+    }
 
     resetMemberForm();
 
     await showAdmin();
     await load();
 
+    return true;
+
   } catch (error) {
-    $('memberMsg').textContent = error.message;
+    console.error(
+      'Erro ao salvar membro:',
+      error.message
+    );
+
+    if (message) {
+      message.textContent = error.message;
+    }
+
+    return false;
   }
 }
 
-// CADASTRAR OU EDITAR MEMBRO
-$('memberForm')?.addEventListener('submit', async e => {
-  e.preventDefault();
+// ==========================================
+// EXCLUIR MEMBRO
+// ==========================================
 
-  const id = $('editId').value;
+async function removeMember(id) {
+  const member = currentMembers.find(
+    item => Number(item.id) === Number(id)
+  );
+
+  if (!member) return;
+
+  const confirmed = confirm(
+    'Deseja realmente remover ' +
+    member.name +
+    ' da Tropa do Japão?'
+  );
+
+  if (!confirmed) return;
 
   await memberRequest(
-    id
-      ? `/api/admin/members/${id}`
-      : '/api/admin/members',
-    id ? 'PUT' : 'POST',
-    {
-      name: $('memberName').value,
-      tag: $('memberTag').value,
-      role: $('memberRole').value,
-      status: $('memberStatus').value
+    '/api/members/' + encodeURIComponent(id),
+    'DELETE'
+  );
+}
+
+// ==========================================
+// FORMULARIO DE LOGIN
+// ==========================================
+
+const loginForm = $('loginForm');
+
+if (loginForm) {
+  loginForm.addEventListener(
+    'submit',
+    async event => {
+      event.preventDefault();
+
+      const message = $('loginMsg');
+
+      if (message) {
+        message.textContent = 'Entrando...';
+      }
+
+      const formData = new FormData(loginForm);
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user: formData.get('user'),
+            password: formData.get('password')
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || 'Falha no login.'
+          );
+        }
+
+        if (message) {
+          message.textContent = '';
+        }
+
+        loginForm.reset();
+
+        await showAdmin();
+
+      } catch (error) {
+        if (message) {
+          message.textContent = error.message;
+        }
+      }
     }
   );
-});
+}
 
-// INICIALIZAÇÃO DO SITE
-load();
+// ==========================================
+// SAIR DO PAINEL
+// ==========================================
+
+const logoutBtn = $('logoutBtn');
+
+if (logoutBtn) {
+  logoutBtn.addEventListener(
+    'click',
+    async () => {
+      try {
+        const response = await fetch(
+          '/api/logout',
+          { method: 'POST' }
+        );
+
+        if (!response.ok) {
+          throw new Error('Erro ao sair.');
+        }
+
+        $('adminCard')?.classList.add('hidden');
+        $('loginForm')?.classList.remove('hidden');
+
+        resetMemberForm();
+
+      } catch (error) {
+        console.error(
+          'Erro no logout:',
+          error.message
+        );
+      }
+    }
+  );
+}
+
+// ==========================================
+// CANCELAR EDICAO
+// ==========================================
+
+const cancelEdit = $('cancelEdit');
+
+if (cancelEdit) {
+  cancelEdit.addEventListener(
+    'click',
+    resetMemberForm
+  );
+}
+
+// ==========================================
+// CADASTRAR OU ATUALIZAR MEMBRO
+// ==========================================
+
+const memberForm = $('memberForm');
+
+if (memberForm) {
+  memberForm.addEventListener(
+    'submit',
+    async event => {
+      event.preventDefault();
+
+      const id = $('editId').value.trim();
+
+      const name = $('memberName').value.trim();
+
+      const tag = $('memberTag').value.trim();
+
+      const role = $('memberRole').value;
+
+      const discordId = $('memberDiscordId')
+        ? $('memberDiscordId').value.trim()
+        : '';
+
+      // Validar ID do Discord
+      if (
+        discordId &&
+        !/^\d{15,22}$/.test(discordId)
+      ) {
+        $('memberMsg').textContent =
+          'Informe um ID do Discord válido.';
+
+        return;
+      }
+
+      const payload = {
+        name,
+        tag,
+        role,
+        discordId
+      };
+
+      const url = id
+        ? '/api/members/' + encodeURIComponent(id)
+        : '/api/members';
+
+      const method = id ? 'PUT' : 'POST';
+
+      await memberRequest(
+        url,
+        method,
+        payload
+      );
+    }
+  );
+}
+
+// ==========================================
+// INICIAR PAINEL
+// ==========================================
+
+setupDiscordField();
+
 sessionCheck();
+
+// ==========================================
+// ATUALIZAR PAINEL AUTOMATICAMENTE
+// ==========================================
+
+// Atualiza o painel a cada 30 segundos,
+// mas nao interrompe quem estiver editando.
+
+setInterval(() => {
+  const adminCard = $('adminCard');
+
+  const editing = Boolean(
+    $('editId')?.value
+  );
+
+  const formFocused = Boolean(
+    $('memberForm')?.contains(
+      document.activeElement
+    )
+  );
+
+  if (
+    adminCard &&
+    !adminCard.classList.contains('hidden') &&
+    !editing &&
+    !formFocused &&
+    !document.hidden
+  ) {
+    showAdmin();
+  }
+}, 30000);
+
+// ==========================================
+// FIM DO APP.JS
+// TROPA DO JAPAO - BOT DIV
+// ==========================================
