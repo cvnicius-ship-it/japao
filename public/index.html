@@ -1,32 +1,19 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b0b0f">
-
   <title>Tropa do Japão | Portal Oficial</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <!-- ================================== -->
   <!-- MENU -->
-  <!-- ================================== -->
-
   <header class="nav">
-
     <a class="brand" href="#inicio">
       <span class="brand-mark">侍</span>
-
       <span>
         TROPA DO
         <span class="red">JAPÃO</span>
@@ -39,36 +26,27 @@
       id="menuBtn"
       type="button"
       aria-label="Abrir menu"
-    >
-      ☰
-    </button>
+    >☰</button>
 
     <nav id="navLinks">
       <a href="#inicio">Início</a>
       <a href="#membros">Membros</a>
       <a href="#lives">Lives</a>
-      <a href="#galeria">Galeria</a>
+      <a href="/galeria.html">Galeria</a>
       <a href="#sobre">Sobre</a>
-
       <a class="nav-panel" href="#painel">
         Área restrita ↗
       </a>
     </nav>
-
   </header>
 
   <main>
 
-    <!-- ================================== -->
-    <!-- INICIO -->
-    <!-- ================================== -->
-
+    <!-- INÍCIO -->
     <section class="hero" id="inicio">
-
       <div class="hero-glow"></div>
 
       <div class="container hero-content">
-
         <span class="eyebrow">
           <span class="pulse"></span>
           PORTAL OFICIAL • FIVEM ROLEPLAY
@@ -87,7 +65,6 @@
         </p>
 
         <div class="hero-actions">
-
           <a
             id="discordLink"
             class="btn primary"
@@ -101,13 +78,9 @@
           <a class="btn ghost" href="#membros">
             Conhecer a equipe →
           </a>
-
         </div>
 
-        <!-- CONTADORES AUTOMATICOS -->
-
         <div class="stats">
-
           <div>
             <strong id="memberCount">00</strong>
             <span>MEMBROS</span>
@@ -122,103 +95,66 @@
             <strong id="liveCount">00</strong>
             <span>LIVES AO VIVO</span>
           </div>
-
         </div>
-
       </div>
 
       <div class="hero-art">
-
         <img
           src="tropa-do-japao.png"
           alt="Emblema oficial da Tropa do Japão"
         >
-
       </div>
-
     </section>
 
-    <!-- ================================== -->
     <!-- MEMBROS -->
-    <!-- ================================== -->
-
-    <section
-      class="section container"
-      id="membros"
-    >
-
+    <section class="section container" id="membros">
       <div class="section-head">
-
         <div>
-
-          <span class="kicker">
-            NOSSA TROPA
-          </span>
-
+          <span class="kicker">NOSSA TROPA</span>
           <h2>
             MEMBROS
             <span>DA TROPA</span>
           </h2>
-
           <p>
             Acompanhe os integrantes
             e seus status no Discord.
           </p>
-
         </div>
 
         <span class="outline-label">
           EQUIPE OFICIAL
         </span>
-
       </div>
-
-      <!-- CARDS GERADOS PELO APP.JS -->
 
       <div
         class="cards"
         id="membersGrid"
         aria-live="polite"
       ></div>
-
     </section>
 
-    <!-- ================================== -->
     <!-- LIVES -->
-    <!-- ================================== -->
-
-    <section
-      class="section dark-section"
-      id="lives"
-    >
-
+    <section class="section dark-section" id="lives">
       <div class="container">
-
         <div class="section-head">
-
           <div>
-
             <span class="kicker">
               ACOMPANHE AO VIVO
             </span>
-
             <h2>
               TRANSMISSÕES
               <span>DA TROPA</span>
             </h2>
-
             <p>
               Acompanhe nossos criadores
               de conteúdo na Twitch,
               TikTok e YouTube.
             </p>
-
           </div>
 
           <span class="outline-label">
             STREAMERS
           </span>
-
         </div>
 
         <div
@@ -231,24 +167,13 @@
           as transmissões configuradas
           para Twitch e TikTok.
         </p>
-
       </div>
-
     </section>
 
-    <!-- ================================== -->
     <!-- GALERIA -->
-    <!-- ================================== -->
-
-    <section
-      class="section container"
-      id="galeria"
-    >
-
+    <section class="section container" id="galeria">
       <div class="section-head">
-
         <div>
-
           <span class="kicker">
             MELHORES MOMENTOS
           </span>
@@ -262,9 +187,7 @@
             Registros de uma história
             construída dentro da cidade.
           </p>
-
         </div>
-
       </div>
 
       <div
@@ -272,21 +195,21 @@
         id="galleryGrid"
       ></div>
 
+      <!-- BOTÃO CORRIGIDO -->
+      <div style="text-align:center; margin-top:30px;">
+        <a
+          href="/galeria.html"
+          class="btn primary"
+        >
+          📸 ABRIR GALERIA COMPLETA →
+        </a>
+      </div>
     </section>
 
-    <!-- ================================== -->
     <!-- SOBRE -->
-    <!-- ================================== -->
-
-    <section
-      class="section about"
-      id="sobre"
-    >
-
+    <section class="section about" id="sobre">
       <div class="container about-inner">
-
         <div>
-
           <span class="kicker">
             NOSSA IDENTIDADE
           </span>
@@ -304,7 +227,6 @@
             e acompanhar tudo o que
             acontece no RP.
           </p>
-
         </div>
 
         <a
@@ -316,24 +238,13 @@
         >
           Entrar para a comunidade ↗
         </a>
-
       </div>
-
     </section>
 
-    <!-- ================================== -->
     <!-- PAINEL ADMINISTRATIVO -->
-    <!-- ================================== -->
-
-    <section
-      class="section container"
-      id="painel"
-    >
-
+    <section class="section container" id="painel">
       <div class="section-head">
-
         <div>
-
           <span class="kicker">
             ACESSO EXCLUSIVO
           </span>
@@ -347,20 +258,13 @@
             Área de gerenciamento
             da Tropa do Japão.
           </p>
-
         </div>
-
       </div>
 
       <div class="panel-wrap">
 
         <!-- LOGIN -->
-
-        <form
-          id="loginForm"
-          class="login-card"
-        >
-
+        <form id="loginForm" class="login-card">
           <h3>ACESSO RESTRITO</h3>
 
           <p>
@@ -370,7 +274,6 @@
 
           <label>
             Usuário
-
             <input
               name="user"
               autocomplete="username"
@@ -381,7 +284,6 @@
 
           <label>
             Senha
-
             <input
               name="password"
               type="password"
@@ -391,10 +293,7 @@
             >
           </label>
 
-          <button
-            class="btn primary"
-            type="submit"
-          >
+          <button class="btn primary" type="submit">
             Entrar no painel →
           </button>
 
@@ -403,23 +302,12 @@
             id="loginMsg"
             role="status"
           ></p>
-
         </form>
 
-        <!-- ================================== -->
-        <!-- AREA ADMINISTRATIVA -->
-        <!-- ================================== -->
-
-        <div
-          class="admin-card hidden"
-          id="adminCard"
-        >
-
+        <!-- ÁREA ADMINISTRATIVA -->
+        <div class="admin-card hidden" id="adminCard">
           <div class="admin-top">
-
-            <h3>
-              VISÃO GERAL DA TROPA
-            </h3>
+            <h3>VISÃO GERAL DA TROPA</h3>
 
             <button
               id="logoutBtn"
@@ -428,10 +316,7 @@
             >
               Sair
             </button>
-
           </div>
-
-          <!-- ESTATISTICAS -->
 
           <div
             class="admin-stats"
@@ -447,25 +332,18 @@
             atualizar o status automaticamente.
           </p>
 
-          <!-- ================================== -->
-          <!-- FORMULARIO DOS MEMBROS -->
-          <!-- ================================== -->
-
+          <!-- FORMULÁRIO DOS MEMBROS -->
           <form
             id="memberForm"
             class="member-form"
           >
-
             <input
               type="hidden"
               id="editId"
             >
 
-            <!-- NOME -->
-
             <label>
               Nome do membro
-
               <input
                 id="memberName"
                 maxlength="50"
@@ -474,11 +352,8 @@
               >
             </label>
 
-            <!-- ID RP -->
-
             <label>
               ID no RP
-
               <input
                 id="memberTag"
                 maxlength="8"
@@ -489,60 +364,23 @@
               >
             </label>
 
-            <!-- CARGOS -->
-
             <label>
               Cargo
-
-              <select
-                id="memberRole"
-                required
-              >
-
-                <option value="Membro">
-                  Membro
-                </option>
-
-                <option value="Elite">
-                  Elite
-                </option>
-
-                <option value="Gerente Elite">
-                  Gerente Elite
-                </option>
-
-                <option value="Gerente de Farm">
-                  Gerente de Farm
-                </option>
-
-                <option value="Gerente de Recrutamento">
-                  Gerente de Recrutamento
-                </option>
-
-                <option value="Gerente de Vendas">
-                  Gerente de Vendas
-                </option>
-
-                <option value="Gerente Geral">
-                  Gerente Geral
-                </option>
-
-                <option value="Sub Líder">
-                  Sub Líder
-                </option>
-
-                <option value="Líder">
-                  Líder
-                </option>
-
+              <select id="memberRole" required>
+                <option value="Membro">Membro</option>
+                <option value="Elite">Elite</option>
+                <option value="Gerente Elite">Gerente Elite</option>
+                <option value="Gerente de Farm">Gerente de Farm</option>
+                <option value="Gerente de Recrutamento">Gerente de Recrutamento</option>
+                <option value="Gerente de Vendas">Gerente de Vendas</option>
+                <option value="Gerente Geral">Gerente Geral</option>
+                <option value="Sub Líder">Sub Líder</option>
+                <option value="Líder">Líder</option>
               </select>
             </label>
 
-            <!-- DISCORD -->
-
             <label>
               ID do Discord
-
               <input
                 id="memberDiscordId"
                 name="discordId"
@@ -555,35 +393,19 @@
               >
             </label>
 
-            <!-- STATUS AUTOMATICO -->
-
             <label>
               Status no Discord
-
-              <select
-                id="memberStatus"
-                disabled
-              >
-                <option value="Offline">
-                  Offline
-                </option>
-
-                <option value="Online">
-                  Online
-                </option>
+              <select id="memberStatus" disabled>
+                <option value="Offline">Offline</option>
+                <option value="Online">Online</option>
               </select>
 
               <small class="hint">
-                Atualizado automaticamente
-                pelo BOT DIV.
+                Atualizado automaticamente pelo BOT DIV.
               </small>
-
             </label>
 
-            <!-- BOTOES -->
-
             <div class="form-actions">
-
               <button
                 class="btn primary"
                 type="submit"
@@ -599,7 +421,6 @@
               >
                 Cancelar edição
               </button>
-
             </div>
 
             <p
@@ -607,32 +428,21 @@
               id="memberMsg"
               role="status"
             ></p>
-
           </form>
 
-          <!-- MEMBROS CADASTRADOS -->
-
+          <!-- LISTA ADMINISTRATIVA -->
           <div
             class="admin-members"
             id="adminMembers"
           ></div>
-
         </div>
-
       </div>
-
     </section>
-
   </main>
 
-  <!-- ================================== -->
-  <!-- RODAPE -->
-  <!-- ================================== -->
-
+  <!-- RODAPÉ -->
   <footer>
-
     <div class="container footer-inner">
-
       <span class="brand footer-brand">
         TROPA DO <span class="red">JAPÃO</span>
       </span>
@@ -644,16 +454,10 @@
       <span>
         Feito para a tropa.
       </span>
-
     </div>
-
   </footer>
 
-  <!-- ================================== -->
   <!-- JAVASCRIPT -->
-  <!-- ================================== -->
-
   <script src="app.js"></script>
-
 </body>
 </html>
