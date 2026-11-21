@@ -1,48 +1,77 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <meta name="theme-color" content="#0b0b0f">
+
   <title>Tropa do Japão | Portal Oficial</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+  <!-- ================================== -->
   <!-- MENU -->
+  <!-- ================================== -->
+
   <header class="nav">
+
     <a class="brand" href="#inicio">
       <span class="brand-mark">侍</span>
+
       <span>
-        TROPA DO <span class="red">JAPÃO</span>
+        TROPA DO
+        <span class="red">JAPÃO</span>
         <small>PORTAL OFICIAL</small>
       </span>
     </a>
 
-    <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+    <button
+      class="menu-btn"
+      id="menuBtn"
+      type="button"
+      aria-label="Abrir menu"
+    >
+      ☰
+    </button>
 
     <nav id="navLinks">
       <a href="#inicio">Início</a>
       <a href="#membros">Membros</a>
       <a href="#lives">Lives</a>
       <a href="#galeria">Galeria</a>
-      <a href="#redes-sociais">Redes Sociais</a>
       <a href="#sobre">Sobre</a>
-      <a class="nav-panel" href="#painel">Área restrita ↗</a>
+
+      <a class="nav-panel" href="#painel">
+        Área restrita ↗
+      </a>
     </nav>
+
   </header>
 
   <main>
 
-    <!-- INÍCIO -->
+    <!-- ================================== -->
+    <!-- INICIO -->
+    <!-- ================================== -->
+
     <section class="hero" id="inicio">
+
       <div class="hero-glow"></div>
 
       <div class="container hero-content">
+
         <span class="eyebrow">
           <span class="pulse"></span>
-          PORTAL OFICIAL • FIVE M ROLEPLAY
+          PORTAL OFICIAL • FIVEM ROLEPLAY
         </span>
 
         <h1>
@@ -51,12 +80,14 @@
         </h1>
 
         <p>
-          União, respeito e presença. Conheça nossa equipe,
-          acompanhe as transmissões e faça parte da nossa
-          história na cidade.
+          União, respeito e presença.
+          Conheça nossa equipe, acompanhe
+          as transmissões e faça parte
+          da nossa história na cidade.
         </p>
 
         <div class="hero-actions">
+
           <a
             id="discordLink"
             class="btn primary"
@@ -70,153 +101,210 @@
           <a class="btn ghost" href="#membros">
             Conhecer a equipe →
           </a>
+
         </div>
 
+        <!-- CONTADORES AUTOMATICOS -->
+
         <div class="stats">
+
           <div>
-            <strong id="memberCount">—</strong>
+            <strong id="memberCount">00</strong>
             <span>MEMBROS</span>
           </div>
 
           <div>
-            <strong id="onlineCount">—</strong>
-            <span>ONLINE (DEMO)</span>
+            <strong id="onlineCount">00</strong>
+            <span>ONLINE NO DISCORD</span>
           </div>
 
           <div>
-            <strong id="liveCount">—</strong>
+            <strong id="liveCount">00</strong>
             <span>LIVES AO VIVO</span>
           </div>
+
         </div>
+
       </div>
 
       <div class="hero-art">
+
         <img
           src="tropa-do-japao.png"
           alt="Emblema oficial da Tropa do Japão"
         >
+
       </div>
+
     </section>
 
+    <!-- ================================== -->
     <!-- MEMBROS -->
-    <section class="section container" id="membros">
+    <!-- ================================== -->
+
+    <section
+      class="section container"
+      id="membros"
+    >
+
       <div class="section-head">
+
         <div>
-          <span class="kicker">NOSSA TROPA</span>
-          <h2>MEMBROS <span>DA TROPA</span></h2>
-          <p>Quem faz nossa história acontecer todos os dias.</p>
-        </div>
 
-        <span class="outline-label">EQUIPE OFICIAL</span>
-      </div>
-
-      <div class="cards" id="membersGrid"></div>
-    </section>
-
-    <!-- LIVES -->
-    <section class="section dark-section" id="lives">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="kicker">ACOMPANHE AO VIVO</span>
-            <h2>TRANSMISSÕES <span>DA TROPA</span></h2>
-            <p>Confira os canais dos nossos criadores de conteúdo.</p>
-          </div>
-
-          <span class="outline-label">STREAMERS</span>
-        </div>
-
-        <div class="cards stream-grid" id="streamsGrid"></div>
-
-        <p class="hint">
-          O status de live é demonstrativo.
-          A detecção automática poderá ser ativada
-          com as APIs da Twitch e do YouTube.
-        </p>
-      </div>
-    </section>
-
-    <!-- GALERIA -->
-    <section class="section container" id="galeria">
-      <div class="section-head">
-        <div>
-          <span class="kicker">MELHORES MOMENTOS</span>
-          <h2>NOSSA <span>GALERIA</span></h2>
-          <p>
-            Registros de uma história construída dentro da cidade.
-          </p>
-        </div>
-      </div>
-
-      <div class="gallery" id="galleryGrid"></div>
-    </section>
-
-    <!-- REDES SOCIAIS DO JAPÃO -->
-    <section class="section redes-japao" id="redes-sociais">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="kicker">FIQUE POR DENTRO</span>
-            <h2>REDES SOCIAIS <span>DO JAPÃO</span></h2>
-            <p>
-              Siga a Tropa do Japão e acompanhe nossos vídeos,
-              novidades e melhores momentos no RP.
-            </p>
-          </div>
-
-          <span class="outline-label">PERFIS OFICIAIS</span>
-        </div>
-
-        <div class="redes-links">
-
-          <a
-            class="rede-card instagram"
-            href="https://www.instagram.com/fac.japao/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Abrir Instagram da Tropa do Japão"
-          >
-            <span class="rede-icone">◎</span>
-            <span class="rede-tipo">INSTAGRAM OFICIAL</span>
-            <strong>INSTAGRAM</strong>
-            <small>@fac.japao</small>
-            <span class="rede-acessar">SEGUIR PERFIL ↗</span>
-          </a>
-
-          <a
-            class="rede-card tiktok"
-            href="https://www.tiktok.com/@fac.japao"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Abrir TikTok da Tropa do Japão"
-          >
-            <span class="rede-icone">♪</span>
-            <span class="rede-tipo">TIKTOK OFICIAL</span>
-            <strong>TIKTOK</strong>
-            <small>@fac.japao</small>
-            <span class="rede-acessar">VER VÍDEOS ↗</span>
-          </a>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- SOBRE -->
-    <section class="section about" id="sobre">
-      <div class="container about-inner">
-        <div>
-          <span class="kicker">NOSSA IDENTIDADE</span>
+          <span class="kicker">
+            NOSSA TROPA
+          </span>
 
           <h2>
-            RESPEITO SE CONQUISTA.<br>
+            MEMBROS
+            <span>DA TROPA</span>
+          </h2>
+
+          <p>
+            Acompanhe os integrantes
+            e seus status no Discord.
+          </p>
+
+        </div>
+
+        <span class="outline-label">
+          EQUIPE OFICIAL
+        </span>
+
+      </div>
+
+      <!-- CARDS GERADOS PELO APP.JS -->
+
+      <div
+        class="cards"
+        id="membersGrid"
+        aria-live="polite"
+      ></div>
+
+    </section>
+
+    <!-- ================================== -->
+    <!-- LIVES -->
+    <!-- ================================== -->
+
+    <section
+      class="section dark-section"
+      id="lives"
+    >
+
+      <div class="container">
+
+        <div class="section-head">
+
+          <div>
+
+            <span class="kicker">
+              ACOMPANHE AO VIVO
+            </span>
+
+            <h2>
+              TRANSMISSÕES
+              <span>DA TROPA</span>
+            </h2>
+
+            <p>
+              Acompanhe nossos criadores
+              de conteúdo na Twitch,
+              TikTok e YouTube.
+            </p>
+
+          </div>
+
+          <span class="outline-label">
+            STREAMERS
+          </span>
+
+        </div>
+
+        <div
+          class="cards stream-grid"
+          id="streamsGrid"
+        ></div>
+
+        <p class="hint">
+          O BOT DIV monitora automaticamente
+          as transmissões configuradas
+          para Twitch e TikTok.
+        </p>
+
+      </div>
+
+    </section>
+
+    <!-- ================================== -->
+    <!-- GALERIA -->
+    <!-- ================================== -->
+
+    <section
+      class="section container"
+      id="galeria"
+    >
+
+      <div class="section-head">
+
+        <div>
+
+          <span class="kicker">
+            MELHORES MOMENTOS
+          </span>
+
+          <h2>
+            NOSSA
+            <span>GALERIA</span>
+          </h2>
+
+          <p>
+            Registros de uma história
+            construída dentro da cidade.
+          </p>
+
+        </div>
+
+      </div>
+
+      <div
+        class="gallery"
+        id="galleryGrid"
+      ></div>
+
+    </section>
+
+    <!-- ================================== -->
+    <!-- SOBRE -->
+    <!-- ================================== -->
+
+    <section
+      class="section about"
+      id="sobre"
+    >
+
+      <div class="container about-inner">
+
+        <div>
+
+          <span class="kicker">
+            NOSSA IDENTIDADE
+          </span>
+
+          <h2>
+            RESPEITO SE CONQUISTA.
+            <br>
             <span>UNIÃO SE CONSTRÓI.</span>
           </h2>
 
           <p>
-            Um espaço para reunir a comunidade da Tropa do Japão,
-            valorizar os membros e acompanhar tudo o que acontece
-            no nosso RP.
+            Um espaço para reunir
+            a comunidade da Tropa do Japão,
+            valorizar nossos membros
+            e acompanhar tudo o que
+            acontece no RP.
           </p>
+
         </div>
 
         <a
@@ -228,31 +316,61 @@
         >
           Entrar para a comunidade ↗
         </a>
+
       </div>
+
     </section>
 
+    <!-- ================================== -->
     <!-- PAINEL ADMINISTRATIVO -->
-    <section class="section container" id="painel">
+    <!-- ================================== -->
+
+    <section
+      class="section container"
+      id="painel"
+    >
+
       <div class="section-head">
+
         <div>
-          <span class="kicker">ACESSO EXCLUSIVO</span>
-          <h2>PAINEL <span>PRIVADO</span></h2>
-          <p>Área de acesso da liderança, protegida por login.</p>
+
+          <span class="kicker">
+            ACESSO EXCLUSIVO
+          </span>
+
+          <h2>
+            PAINEL
+            <span>PRIVADO</span>
+          </h2>
+
+          <p>
+            Área de gerenciamento
+            da Tropa do Japão.
+          </p>
+
         </div>
+
       </div>
 
       <div class="panel-wrap">
 
         <!-- LOGIN -->
-        <form id="loginForm" class="login-card">
+
+        <form
+          id="loginForm"
+          class="login-card"
+        >
+
           <h3>ACESSO RESTRITO</h3>
 
           <p>
-            Entre com as credenciais configuradas pelo administrador.
+            Entre com suas credenciais
+            de administrador.
           </p>
 
           <label>
             Usuário
+
             <input
               name="user"
               autocomplete="username"
@@ -263,6 +381,7 @@
 
           <label>
             Senha
+
             <input
               name="password"
               type="password"
@@ -272,34 +391,81 @@
             >
           </label>
 
-          <button class="btn primary" type="submit">
+          <button
+            class="btn primary"
+            type="submit"
+          >
             Entrar no painel →
           </button>
 
-          <p class="form-msg" id="loginMsg" role="status"></p>
+          <p
+            class="form-msg"
+            id="loginMsg"
+            role="status"
+          ></p>
+
         </form>
 
-        <!-- ÁREA ADMINISTRATIVA -->
-        <div class="admin-card hidden" id="adminCard">
+        <!-- ================================== -->
+        <!-- AREA ADMINISTRATIVA -->
+        <!-- ================================== -->
+
+        <div
+          class="admin-card hidden"
+          id="adminCard"
+        >
 
           <div class="admin-top">
-            <h3>VISÃO GERAL DA TROPA</h3>
 
-            <button id="logoutBtn" class="btn ghost" type="button">
+            <h3>
+              VISÃO GERAL DA TROPA
+            </h3>
+
+            <button
+              id="logoutBtn"
+              class="btn ghost"
+              type="button"
+            >
               Sair
             </button>
+
           </div>
 
-          <div class="admin-stats" id="adminStats"></div>
+          <!-- ESTATISTICAS -->
+
+          <div
+            class="admin-stats"
+            id="adminStats"
+          ></div>
 
           <h3>GERENCIAR MEMBROS</h3>
-          <p>Cadastre, edite ou remova integrantes da tropa.</p>
 
-          <form id="memberForm" class="member-form">
-            <input type="hidden" id="editId">
+          <p>
+            Cadastre, edite e remova
+            integrantes da Tropa do Japão.
+            Vincule o Discord para
+            atualizar o status automaticamente.
+          </p>
+
+          <!-- ================================== -->
+          <!-- FORMULARIO DOS MEMBROS -->
+          <!-- ================================== -->
+
+          <form
+            id="memberForm"
+            class="member-form"
+          >
+
+            <input
+              type="hidden"
+              id="editId"
+            >
+
+            <!-- NOME -->
 
             <label>
-              Nome
+              Nome do membro
+
               <input
                 id="memberName"
                 maxlength="50"
@@ -308,8 +474,11 @@
               >
             </label>
 
+            <!-- ID RP -->
+
             <label>
               ID no RP
+
               <input
                 id="memberTag"
                 maxlength="8"
@@ -320,34 +489,101 @@
               >
             </label>
 
+            <!-- CARGOS -->
+
             <label>
               Cargo
-              <select id="memberRole">
-                <option value="Membro">Membro</option>
-                <option value="Elite">Elite</option>
-                <option value="Gerente Elite">Gerente Elite</option>
-                <option value="Gerente de Farm">Gerente de Farm</option>
+
+              <select
+                id="memberRole"
+                required
+              >
+
+                <option value="Membro">
+                  Membro
+                </option>
+
+                <option value="Elite">
+                  Elite
+                </option>
+
+                <option value="Gerente Elite">
+                  Gerente Elite
+                </option>
+
+                <option value="Gerente de Farm">
+                  Gerente de Farm
+                </option>
+
                 <option value="Gerente de Recrutamento">
                   Gerente de Recrutamento
                 </option>
+
                 <option value="Gerente de Vendas">
                   Gerente de Vendas
                 </option>
-                <option value="Gerente Geral">Gerente Geral</option>
-                <option value="Sub Líder">Sub Líder</option>
-                <option value="Líder">Líder</option>
+
+                <option value="Gerente Geral">
+                  Gerente Geral
+                </option>
+
+                <option value="Sub Líder">
+                  Sub Líder
+                </option>
+
+                <option value="Líder">
+                  Líder
+                </option>
+
               </select>
             </label>
+
+            <!-- DISCORD -->
 
             <label>
-              Status
-              <select id="memberStatus">
-                <option>Offline</option>
-                <option>Online</option>
-              </select>
+              ID do Discord
+
+              <input
+                id="memberDiscordId"
+                name="discordId"
+                type="text"
+                inputmode="numeric"
+                maxlength="22"
+                pattern="[0-9]{15,22}"
+                placeholder="Ex.: 123456789012345678"
+                autocomplete="off"
+              >
             </label>
 
+            <!-- STATUS AUTOMATICO -->
+
+            <label>
+              Status no Discord
+
+              <select
+                id="memberStatus"
+                disabled
+              >
+                <option value="Offline">
+                  Offline
+                </option>
+
+                <option value="Online">
+                  Online
+                </option>
+              </select>
+
+              <small class="hint">
+                Atualizado automaticamente
+                pelo BOT DIV.
+              </small>
+
+            </label>
+
+            <!-- BOTOES -->
+
             <div class="form-actions">
+
               <button
                 class="btn primary"
                 type="submit"
@@ -363,6 +599,7 @@
               >
                 Cancelar edição
               </button>
+
             </div>
 
             <p
@@ -370,31 +607,53 @@
               id="memberMsg"
               role="status"
             ></p>
+
           </form>
 
-          <div class="admin-members" id="adminMembers"></div>
+          <!-- MEMBROS CADASTRADOS -->
+
+          <div
+            class="admin-members"
+            id="adminMembers"
+          ></div>
 
         </div>
+
       </div>
+
     </section>
 
   </main>
 
-  <!-- RODAPÉ -->
+  <!-- ================================== -->
+  <!-- RODAPE -->
+  <!-- ================================== -->
+
   <footer>
+
     <div class="container footer-inner">
+
       <span class="brand footer-brand">
-        <span class="brand-mark">侍</span>
-        <span>
-          TROPA DO <span class="red">JAPÃO</span>
-        </span>
+        TROPA DO <span class="red">JAPÃO</span>
       </span>
 
-      <span>Tropa do Japão • FiveM RP</span>
-      <span>Feito para a tropa.</span>
+      <span>
+        Tropa do Japão • FiveM RP
+      </span>
+
+      <span>
+        Feito para a tropa.
+      </span>
+
     </div>
+
   </footer>
 
+  <!-- ================================== -->
+  <!-- JAVASCRIPT -->
+  <!-- ================================== -->
+
   <script src="app.js"></script>
+
 </body>
 </html>
