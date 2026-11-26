@@ -8,6 +8,22 @@
   <title>Tropa do Japão | Portal Oficial</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="/tropa-do-japao.png">
+  <style>
+    .home-gallery {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+    .home-gallery-card {position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;min-height:280px;padding:24px;border:1px solid #493039;border-radius:14px;background:radial-gradient(ellipse at 85% 0%,#65222f 0%,transparent 65%),linear-gradient(145deg,#20171f,#111116);transition:transform .25s,border-color .25s,box-shadow .25s;}
+    .home-gallery-card:nth-child(2){background:radial-gradient(ellipse at 85% 0%,#77232c,transparent 65%),linear-gradient(145deg,#25151a,#111116);}
+    .home-gallery-card:nth-child(3){background:radial-gradient(ellipse at 85% 0%,#573044,transparent 65%),linear-gradient(145deg,#20171f,#111116);}
+    .home-gallery-card:hover,.home-gallery-card:focus-visible{transform:translateY(-5px);border-color:#ed253b;box-shadow:0 12px 35px #ed253b30;outline:2px solid transparent;}
+    .home-gallery-number{font-size:10px;font-weight:800;letter-spacing:2px;color:#ff8791;}
+    .home-gallery-icon{font-size:48px;line-height:1.2;margin:20px 0 12px;}
+    .home-gallery-card h3{font-size:32px;line-height:1.1;margin:0 0 8px;color:#fff;}
+    .home-gallery-card p{font-size:13px;color:#c2bdc6;line-height:1.5;margin:0 0 20px;}
+    .home-gallery-link{margin-top:auto;font-size:11px;letter-spacing:1px;font-weight:800;color:#ff8791;}
+    .home-gallery-actions{text-align:center;margin-top:30px;}
+    .home-gallery-actions .btn{border-radius:8px;}
+    @media(max-width:760px){.home-gallery{grid-template-columns:1fr;}.home-gallery-card{min-height:220px;}}
+    @media(prefers-reduced-motion:reduce){.home-gallery-card{transition:none;}}
+  </style>
 </head>
 <body>
 
@@ -205,19 +221,31 @@
         </div>
       </div>
 
-      <div
-        class="gallery"
-        id="galleryGrid"
-      ></div>
-
-      <!-- BOTÃO CORRIGIDO -->
-      <div style="text-align:center; margin-top:30px;">
-        <a
-          href="/galeria.html"
-          class="btn primary"
-        >
-          📸 ABRIR GALERIA COMPLETA →
+      <div class="home-gallery">
+        <a class="home-gallery-card" href="/galeria.html?categoria=Ve%C3%ADculos">
+          <span class="home-gallery-number">01 / GARAGEM</span>
+          <span class="home-gallery-icon" aria-hidden="true">🚘</span>
+          <h3>Carros da FAC</h3>
+          <p>Carros personalizados e encontros da tropa.</p>
+          <span class="home-gallery-link">EXPLORAR →</span>
         </a>
+        <a class="home-gallery-card" href="/galeria.html?categoria=Eventos">
+          <span class="home-gallery-number">02 / AÇÃO NO RP</span>
+          <span class="home-gallery-icon" aria-hidden="true">🎯</span>
+          <h3>Tiro</h3>
+          <p>Confrontos e melhores jogadas no RP.</p>
+          <span class="home-gallery-link">EXPLORAR →</span>
+        </a>
+        <a class="home-gallery-card" href="/galeria.html?categoria=Roleplay">
+          <span class="home-gallery-number">03 / RESENHA</span>
+          <span class="home-gallery-icon" aria-hidden="true">😂</span>
+          <h3>Clipes engraçados</h3>
+          <p>Resenhas e momentos inesquecíveis.</p>
+          <span class="home-gallery-link">EXPLORAR →</span>
+        </a>
+      </div>
+      <div class="home-gallery-actions">
+        <a href="/galeria.html" class="btn primary">📸 EXPLORAR GALERIA COMPLETA →</a>
       </div>
     </section>
 
@@ -476,3 +504,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+
