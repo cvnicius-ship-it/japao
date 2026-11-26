@@ -85,89 +85,61 @@ function setText(id, value) {
 // RENDERIZAR MEMBROS
 // ==========================================
 
+const memberRanks = [
+  ['Líder', '👑', '#ffd36b'],
+  ['Sub Líder', '♛', '#e6ae50'],
+  ['Gerente Geral', '🛡', '#ff4757'],
+  ['Gerente Elite', '⚔', '#ff7755'],
+  ['Gerente de Farm', '📦', '#62d99b'],
+  ['Gerente de Recrutamento', '👥', '#60a5fa'],
+  ['Gerente de Vendas', '💰', '#36d6cf'],
+  ['Elite', '⚔', '#b18aff'],
+  ['Membro', '侍', '#b0b0bd']
+];
+const roleKey = value => safeText(value, 'Membro').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ');
+function rankIndex(member) {
+  const index = memberRanks.findIndex(rank => roleKey(rank[0]) === roleKey(member.role));
+  return index < 0 ? memberRanks.length : index;
+}
+function sortMembers(members) {
+  return [...members].sort((a,b) => rankIndex(a)-rankIndex(b) || safeText(a.tag).localeCompare(safeText(b.tag), 'pt-BR', {numeric:true}) || safeText(a.name).localeCompare(safeText(b.name), 'pt-BR'));
+}
 function renderMembers(members) {
   const grid = $('membersGrid');
-
   if (!grid) return;
-
   grid.replaceChildren();
-
-  if (!members.length) {
-    grid.append(
-      el('p', 'hint', 'Nenhum membro cadastrado.')
-    );
-
-    return;
-  }
-
-  for (const member of members) {
-    const online = isOnline(member);
-
-    const card = el('article', 'member-card');
-
-    // Retrato
-    const portrait = el('div', 'portrait');
-
-    const avatar = el(
-      'span',
-      '',
-      safeText(
-        member.avatar,
-        safeText(member.name, '?')[0]
-      ).toUpperCase()
-    );
-
-    const roleTag = el(
-      'div',
-      'role-tag',
-      safeText(member.role, 'Membro').toUpperCase()
-    );
-
-    portrait.append(avatar, roleTag);
-
-    // Informacoes
-    const body = el('div', 'member-body');
-
-    const name = el(
-      'h3',
-      '',
-      safeText(member.name, 'Sem nome')
-    );
-
-    const tag = el(
-      'p',
-      '',
-      'ID ' + safeText(member.tag, '---')
-    );
-
-    // Rodape
-    const bottom = el('div', 'member-bottom');
-
-    const role = el(
-      'span',
-      '',
-      safeText(member.role, 'Membro')
-    );
-
-    const status = el(
-      'span',
-      online ? 'status' : 'status off',
-      online ? '● Online' : '● Offline'
-    );
-
-    // Identificador para CSS
-    card.dataset.status = online
-      ? 'online'
-      : 'offline';
-
-    bottom.append(role, status);
-
-    body.append(name, tag, bottom);
-
-    card.append(portrait, body);
-
-    grid.append(card);
-  }
+  grid.classList.add('hierarchy-grid');
+  const ordered = sortMembers(members);
+  const ranks = [...memberRanks];
+  if (ordered.some(m => rankIndex(m) === memberRanks.length)) ranks.push(['Outros cargos', '侍', '#b0b0bd']);
+  ranks.forEach(([label, symbol, color], index) => {
+    const group = ordered.filter(m => rankIndex(m) === index);
+    const section = el('section', 'rank-section');
+    section.style.setProperty('--rank-color', color);
+    const heading = el('div', 'rank-heading');
+    const icon = el('span', 'rank-icon', symbol);
+    icon.setAttribute('aria-hidden', 'true');
+    heading.append(icon, el('h3', '', label), el('span', 'rank-count', `${group.length} integrante(s) · ${group.filter(isOnline).length} online`));
+    section.append(heading);
+    const cards = el('div', 'rank-cards');
+    if (!group.length) cards.append(el('p', 'rank-empty', 'Nenhum integrante neste cargo.'));
+    for (const member of group) {
+      const online = isOnline(member);
+      const card = el('article', 'member-card');
+      card.dataset.status = online ? 'online' : 'offline';
+      const portrait = el('div', 'portrait');
+      const avatar = el('span', 'rank-avatar', safeText(member.avatar, safeText(member.name, '?')[0]).toUpperCase());
+      portrait.append(avatar, el('div', 'role-tag', safeText(member.role, 'Membro').toUpperCase()), el('div', 'rank-emblem', symbol));
+      const body = el('div', 'member-body');
+      const bottom = el('div', 'member-bottom');
+      bottom.append(el('span', 'rank-role', safeText(member.role, 'Membro')), el('span', online ? 'status' : 'status off', online ? '● Online' : '● Offline'));
+      body.append(el('h3', '', safeText(member.name, 'Sem nome')), el('p', '', 'ID ' + safeText(member.tag, '---')), bottom);
+      card.append(portrait, body);
+      cards.append(card);
+    }
+    section.append(cards);
+    grid.append(section);
+  });
 }
 
 // ==========================================
@@ -689,7 +661,7 @@ async function showAdmin() {
 // ==========================================
 
 function renderAdminMembers(members) {
-  currentMembers = members;
+  currentMembers = sortMembers(members);
 
   const container = $('adminMembers');
 
@@ -705,7 +677,7 @@ function renderAdminMembers(members) {
     return;
   }
 
-  for (const member of members) {
+  for (const member of currentMembers) {
     const online = isOnline(member);
 
     const row = el('div', 'admin-member-row');
