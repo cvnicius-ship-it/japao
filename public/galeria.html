@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -291,7 +290,7 @@ header { background: #101015; border-bottom: 1px solid #ed253b44; box-shadow: 0 
       </select>
 
       <div id="fileFields">
-        <label for="media">Arquivo (foto até 8 MB; MP4 até 200 MB)</label>
+        <label for="media">Arquivo (foto até 8 MB; MP4 até 200 MB (compressão acima de 100 MB))</label>
         <input id="media" name="media" type="file"
           accept="image/jpeg,image/png,image/webp" required>
       </div>
@@ -524,6 +523,77 @@ document.querySelectorAll('.cat').forEach(btn => {
 
 toggle.onclick = () => panel.classList.toggle('hidden');
 
+// Compressão local: o vídeo original nunca é enviado acima do limite.
+async function compressVideo(file) {
+  const max = 100 * 1024 * 1024;
+  if (file.size <= max) return file;
+  const mime = ['video/mp4;codecs=avc1.420034,mp4a.40.2', 'video/mp4'].find(t =>
+    typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t));
+  if (!mime) throw new Error('Este navegador não grava MP4. Atualize o Chrome/Brave ou comprima o vídeo externamente para menos de 100 MB.');
+  const video = document.createElement('video');
+  const url = URL.createObjectURL(file);
+  const progress = document.getElementById('uploadProgress');
+  let audio, stream, recorder, frame, timer;
+  try {
+    video.preload = 'auto'; video.playsInline = true;
+    const ready = new Promise((resolve, reject) => {
+      video.onloadeddata = resolve;
+      video.onerror = () => reject(new Error('Não foi possível ler o MP4.'));
+      timer = setTimeout(() => reject(new Error('Tempo excedido ao abrir o vídeo.')), 30000);
+    });
+    video.src = url;
+    // Cria o contexto antes da espera para aproveitar o gesto do usuário.
+    audio = new AudioContext();
+    const resume = audio.resume();
+    await ready; clearTimeout(timer); await resume;
+    if (!Number.isFinite(video.duration) || video.duration <= 0 || !video.videoWidth) throw new Error('Duração ou resolução inválida.');
+    const totalRate = Math.floor(92 * 1024 * 1024 * 8 / video.duration);
+    const audioRate = 96000;
+    const videoRate = Math.min(8000000, totalRate - audioRate);
+    if (videoRate < 120000) throw new Error('Vídeo longo demais para compressão com qualidade aceitável. Use o YouTube.');
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, (videoRate < 900000 ? 720 : 1280) / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.max(2, Math.floor(video.videoWidth * scale / 2) * 2);
+    canvas.height = Math.max(2, Math.floor(video.videoHeight * scale / 2) * 2);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const source = audio.createMediaElementSource(video);
+    const destination = audio.createMediaStreamDestination();
+    source.connect(destination);
+    stream = canvas.captureStream(30);
+    destination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+    recorder = new MediaRecorder(stream, {mimeType: mime, videoBitsPerSecond: videoRate, audioBitsPerSecond: audioRate});
+    const chunks = [];
+    const finished = new Promise((resolve, reject) => {
+      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recorder.onerror = () => reject(new Error('Falha na compressão do MP4.'));
+      recorder.onstop = () => resolve(new Blob(chunks, {type:'video/mp4'}));
+      video.onended = () => { if (recorder.state !== 'inactive') recorder.stop(); };
+      video.onerror = () => reject(new Error('Falha na leitura do vídeo.'));
+    });
+    progress.classList.remove('hidden'); progress.value = 0;
+    message.textContent = 'Comprimindo vídeo... mantenha esta aba aberta e visível.';
+    function draw() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const percent = Math.min(99, Math.floor(video.currentTime / video.duration * 100));
+      progress.value = percent;
+      message.textContent = 'Comprimindo: ' + percent + '% — mantenha a aba visível.';
+      if (!video.ended) frame = requestAnimationFrame(draw);
+    }
+    recorder.start(1000);
+    await video.play(); draw();
+    const blob = await finished;
+    if (!blob.size || blob.size > max) throw new Error('A compressão não atingiu 100 MB. Reduza o vídeo externamente ou use o YouTube.');
+    return new File([blob], file.name.replace(/\.mp4$/i, '') + '-comprimido.mp4', {type:'video/mp4'});
+  } finally {
+    clearTimeout(timer); cancelAnimationFrame(frame);
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+    video.pause(); stream?.getTracks().forEach(t => t.stop());
+    if (audio) await audio.close().catch(() => {});
+    video.removeAttribute('src'); video.load(); URL.revokeObjectURL(url);
+  }
+}
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const submit = form.querySelector('button[type=submit]');
@@ -547,7 +617,7 @@ form.addEventListener('submit', async e => {
         })
       };
     } else {
-      const file = mediaInput.files[0];
+      let file = mediaInput.files[0];
       const limit = type === 'video'
         ? 200 * 1024 * 1024 : 8 * 1024 * 1024;
       if (!file || file.size > limit) {
@@ -561,10 +631,10 @@ form.addEventListener('submit', async e => {
           !['image/jpeg','image/png','image/webp'].includes(file.type)) {
         throw new Error('Selecione JPG, PNG ou WEBP');
       }
-      options = {
-        method: 'POST',
-        body: new FormData(form)
-      };
+      const body = new FormData(form);
+      if (type === 'video') file = await compressVideo(file);
+      body.set('media', file, file.name);
+      options = { method: 'POST', body }; 
     }
 
     if (type === 'youtube') await request(url, options);

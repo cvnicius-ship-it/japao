@@ -11,7 +11,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
   const categories = ['Eventos', 'Veículos', 'Roleplay'];
   const IMAGE_LIMIT = 8 * 1024 * 1024;
-  const VIDEO_LIMIT = 200 * 1024 * 1024;
+  const VIDEO_LIMIT = 100 * 1024 * 1024;
 
   const upload = multer({
     storage: multer.diskStorage({
@@ -457,7 +457,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     ) {
       return res.status(400).json({
         error: err.code === 'LIMIT_FILE_SIZE'
-          ? 'Arquivo acima de 200 MB'
+          ? 'Arquivo acima de 100 MB. Comprima o vídeo antes de enviar.'
           : err.message
       });
     }
