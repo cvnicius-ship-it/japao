@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Galeria | Tropa do Japão</title>
+<link rel="icon" href="/tropa-do-japao.png" type="image/png">
 <style>
 :root {
   color-scheme: dark;
@@ -197,13 +198,43 @@ footer {
   .photos { grid-template-columns: 1fr; }
   .photo img, .photo video, .photo iframe { height: 230px; }
 }
+
+body { background: radial-gradient(ellipse at 85% 0%,#38131c 0%,#09090d 48%); min-height:100vh; }
+header { background:#0b0b10e8; }
+.heading { font-size:clamp(40px,7vw,82px); letter-spacing:-2px; }
+.categories { gap:18px; }
+.cat { position:relative; isolation:isolate; overflow:hidden; min-height:210px; border-radius:16px; background:linear-gradient(145deg,#401823,#15151b 70%); }
+.cat[data-category="Veículos"] { order:-1; background:linear-gradient(145deg,#44232b,#141419 70%); }
+.cat[data-category="Roleplay"] { background:linear-gradient(145deg,#39202b,#141419 70%); }
+.cat-icon { position:absolute; right:20px; top:18px; font-size:60px; opacity:.8; }
+.cat strong { font-size:clamp(22px,3vw,30px); }
+.cat.active { box-shadow:0 0 0 1px var(--red),0 10px 35px #ed253b22; }
+.cat:focus-visible,button:focus-visible { outline:2px solid #ff8793; outline-offset:3px; }
+.photo { border-radius:14px; transition:border-color .2s,transform .2s; }
+.photo:hover { border-color:#ed253b; transform:translateY(-3px); }
+.photo .info { min-height:95px; }
+.primary,.secondary,.panel,.empty { border-radius:10px; }
+@media(max-width:720px){ .cat { min-height:125px; } .cat-icon { font-size:42px; } }
+@media(prefers-reduced-motion:reduce){ * { transition:none!important; } }
+
+header { background: #101015; border-bottom: 1px solid #ed253b44; box-shadow: 0 8px 30px #0005; }
+.brand-new { display:flex; align-items:center; gap:12px; }
+.brand-new img { width:48px; height:48px; object-fit:cover; border-radius:10px; border:1px solid #ed253b66; }
+.brand-new small { display:block; color:#aaa; font-size:9px; letter-spacing:2px; margin-top:5px; }
+.voltar-site { display:inline-flex; align-items:center; justify-content:center; gap:12px; padding:12px 20px; background:linear-gradient(135deg,#351018,#171117); border:1px solid #ed253b; border-radius:9px; color:#fff; font-size:12px; font-weight:800; letter-spacing:1px; box-shadow:0 0 15px #ed253b20; transition:background .25s,box-shadow .25s,transform .25s; }
+.voltar-site span { font-size:22px; color:#ed253b; transition:transform .25s; }
+.voltar-site:hover { background:#b51d30; box-shadow:0 0 25px #ed253b65; transform:translateY(-2px); }
+.voltar-site:hover span { color:white; transform:translateX(-4px); }
+.voltar-site:focus-visible,.brand-new:focus-visible { outline:2px solid white; outline-offset:4px; }
+@media(max-width:520px) { header { padding:15px 12px; gap:8px; } .brand-new { font-size:12px; letter-spacing:.5px; gap:7px; } .brand-new img { width:35px; height:35px; } .brand-new small { font-size:8px; letter-spacing:1px; } .voltar-site { padding:8px 10px; font-size:10px; letter-spacing:0; gap:5px; } }
+@media(prefers-reduced-motion:reduce) { .voltar-site,.voltar-site span { transition:none; } }
 </style>
 </head>
 <body>
 
 <header>
-  <a href="/" class="brand">TROPA DO <span>JAPÃO 🇯🇵</span></a>
-  <a href="/">← Voltar ao site</a>
+  <a href="/" class="brand brand-new"><img src="/tropa-do-japao.png" alt=""><div>TROPA DO <span>JAPÃO</span><small>LADO LESTE RP</small></div></a>
+  <a href="/" class="voltar-site"><span aria-hidden="true">←</span> VOLTAR AO INÍCIO</a>
 </header>
 
 <main>
@@ -213,18 +244,18 @@ footer {
 
   <div class="categories">
     <button class="cat" data-category="Eventos">
-      <em>EVENTOS</em>
-      <strong>Momentos do Japão X Tiro</strong>
+      <em>02 / AÇÃO NO RP</em><span class="cat-icon">🎯</span>
+      <strong>Tiro</strong>
     </button>
 
     <button class="cat" data-category="Veículos">
-      <em>VEÍCULOS</em>
-      <strong>Garagem da facção</strong>
+      <em>01 / GARAGEM</em><span class="cat-icon">🚘</span>
+      <strong>Carros da FAC</strong>
     </button>
 
     <button class="cat" data-category="Roleplay">
-      <em>ROLEPLAY</em>
-      <strong>Noite na cidade</strong>
+      <em>03 / RESENHA</em><span class="cat-icon">😂</span>
+      <strong>Clipes engraçados</strong>
     </button>
   </div>
 
@@ -247,9 +278,9 @@ footer {
 
       <label for="category">Categoria</label>
       <select id="category" name="category">
-        <option>Eventos</option>
-        <option>Veículos</option>
-        <option>Roleplay</option>
+        <option value="Eventos">Tiro</option>
+        <option value="Veículos">Carros da FAC</option>
+        <option value="Roleplay">Clipes engraçados</option>
       </select>
 
       <label for="mediaType">Tipo de publicação</label>
@@ -298,6 +329,7 @@ const params = new URLSearchParams(location.search);
 let selected = categories.includes(params.get('categoria'))
   ? params.get('categoria') : null;
 let isAdmin = false;
+let loadVersion = 0;
 
 const photos = document.getElementById('photos');
 const panel = document.getElementById('uploadPanel');
@@ -369,14 +401,16 @@ document.addEventListener('keydown', e => {
 });
 
 async function loadPhotos() {
+  const version = ++loadVersion;
   document.querySelectorAll('.cat').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.category === selected);
+    btn.setAttribute('aria-pressed', String(btn.dataset.category === selected));
   });
 
   const categoryNames = {
-    Eventos: 'Momentos do Japão X Tiro',
-    'Veículos': 'Garagem da facção',
-    Roleplay: 'Noite na cidade'
+    Eventos: 'Tiro',
+    'Veículos': 'Carros da FAC',
+    Roleplay: 'Clipes engraçados'
   };
 
   document.getElementById('sectionTitle').textContent =
@@ -388,6 +422,7 @@ async function loadPhotos() {
     const url = '/api/gallery' +
       (selected ? '?category=' + encodeURIComponent(selected) : '');
     const { items } = await request(url);
+    if (version !== loadVersion) return;
 
     if (!items.length) {
       const empty = document.createElement('div');
@@ -433,7 +468,7 @@ async function loadPhotos() {
       const title = document.createElement('strong');
       title.textContent = item.title;
       const cat = document.createElement('div');
-      cat.textContent = item.category;
+      cat.textContent = categoryNames[item.category] || item.category;
       cat.style.color = '#aaa';
       cat.style.marginTop = '5px';
       const typeLabel = document.createElement('div');
@@ -467,6 +502,7 @@ async function loadPhotos() {
       photos.append(card);
     }
   } catch (e) {
+    if (version !== loadVersion) return;
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.textContent = e.message;
@@ -548,6 +584,7 @@ form.addEventListener('submit', async e => {
 
 (async () => {
   await loadSession();
+  if (selected) document.getElementById('category').value = selected;
   await loadPhotos();
 })();
 </script>
