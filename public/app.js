@@ -210,6 +210,8 @@ function validStreamUrl(value) {
     const url = new URL(value);
 
     const allowedHosts = [
+      'kick.com',
+      'www.kick.com',
       'twitch.tv',
       'www.twitch.tv',
       'youtube.com',
@@ -236,7 +238,20 @@ function validStreamUrl(value) {
 // RENDERIZAR LIVES
 // ==========================================
 
+let streamFilter = 'Todos';
+document.querySelectorAll('[data-live-filter]').forEach(button => {
+  button.addEventListener('click', () => {
+    streamFilter = button.dataset.liveFilter;
+    document.querySelectorAll('[data-live-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    renderStreams(publicData.streams);
+  });
+});
 function renderStreams(streams) {
+  const liveTotal = streams.filter(s => s.live === true).length;
+  setText('streamsOnline', liveTotal);
+  setText('streamsOffline', streams.length - liveTotal);
+  setText('streamsTotal', streams.length);
+  streams = streams.filter(s => streamFilter === 'Todos' || (streamFilter === 'Ao vivo' && s.live === true) || (streamFilter === 'Offline' && s.live !== true) || s.platform === streamFilter);
   const grid = $('streamsGrid');
 
   if (!grid) return;
@@ -248,7 +263,7 @@ function renderStreams(streams) {
       el(
         'p',
         'hint',
-        'Nenhuma live cadastrada no momento.'
+        'Nenhum canal encontrado neste filtro.'
       )
     );
 
@@ -264,6 +279,8 @@ function renderStreams(streams) {
     const live = stream.live === true;
 
     const card = el('article', 'stream-card');
+    card.dataset.platform = safeText(stream.platform).toLowerCase();
+    card.dataset.live = String(live);
 
     const preview = el(
       'div',

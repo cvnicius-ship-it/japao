@@ -79,6 +79,10 @@ function normalizeChannel(platform, channel) {
     }
   }
 
+  if (platform === 'Kick') {
+    return 'Kick:' + (pathname.split('/').filter(Boolean)[0] || '');
+  }
+
   if (platform === 'Twitch') {
     pathname = '/' + (
       pathname.split('/').filter(Boolean)[0] || ''
@@ -145,6 +149,7 @@ function validUrl(platform, value) {
     const url = new URL(value);
 
     const hosts = {
+      Kick: ['kick.com', 'www.kick.com'],
       TikTok: [
         'tiktok.com',
         'www.tiktok.com',
@@ -242,7 +247,8 @@ const client = new Client({
 const platforms = [
   { name: 'TikTok', value: 'TikTok' },
   { name: 'Twitch', value: 'Twitch' },
-  { name: 'YouTube', value: 'YouTube' }
+  { name: 'YouTube', value: 'YouTube' },
+  { name: 'Kick', value: 'Kick' }
 ];
 
 function platformOption(command) {
@@ -976,6 +982,49 @@ async function pollTikTok() {
   }
 }
 
+// KICK - API oficial (credenciais opcionais)
+let kickToken = '', kickExpiry = 0, pollingKick = false;
+async function pollKick() {
+  if (pollingKick || !process.env.KICK_CLIENT_ID || !process.env.KICK_CLIENT_SECRET) return;
+  pollingKick = true;
+  try {
+    const targets = read().filter(x => x.platform === 'Kick');
+    if (!targets.length) return;
+    if (!kickToken || Date.now() >= kickExpiry) {
+      const response = await fetch('https://id.kick.com/oauth/token', {
+        method: 'POST', body: new URLSearchParams({client_id: process.env.KICK_CLIENT_ID, client_secret: process.env.KICK_CLIENT_SECRET, grant_type: 'client_credentials'}), signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) throw new Error('Kick OAuth HTTP ' + response.status);
+      const auth = await response.json();
+      kickToken = auth.access_token;
+      kickExpiry = Date.now() + Math.max(0, auth.expires_in - 60) * 1000;
+    }
+    for (const item of targets) {
+      try {
+        const slug = channelHandle('Kick', item.channel).toLowerCase();
+        const response = await fetch('https://api.kick.com/public/v1/channels?slug=' + encodeURIComponent(slug), {headers: {Authorization: 'Bearer ' + kickToken}, signal: AbortSignal.timeout(15000)});
+        if (!response.ok) { if (response.status === 401) kickToken = ''; throw new Error('Kick HTTP ' + response.status); }
+        const data = await response.json();
+        const channel = data.data?.find(x => String(x.slug).toLowerCase() === slug);
+        if (typeof channel?.stream?.is_live !== 'boolean') continue;
+        const live = channel.stream.is_live;
+        const current = findItem(read(), item.discordId, 'Kick', item.channel);
+        if (!current) continue;
+        const changed = current.live !== live;
+        const lastAnnounced = live ? (current.lastAnnounced || String(Date.now())) : '';
+        await siteSync('PATCH', '/status', {discordId: current.discordId, platform: 'Kick', channel: current.channel, live, lastAnnounced});
+        const latest = read();
+        const target = findItem(latest, item.discordId, 'Kick', item.channel);
+        if (!target) continue;
+        Object.assign(target, {live, lastAnnounced, lastManual: 0});
+        write(latest);
+        if (changed && live) await announce(target);
+      } catch (error) { console.error('Kick:', error.message); }
+    }
+  } catch (error) { console.error('Monitoramento Kick:', error.message); }
+  finally { pollingKick = false; }
+}
+
 // =====================================
 // ONLINE / OFFLINE DISCORD
 // =====================================
@@ -1196,6 +1245,8 @@ client.once(Events.ClientReady, async () => {
   }
 
   // Monitorar lives
+  pollKick().catch(console.error);
+  setInterval(() => pollKick().catch(console.error), 120000);
   pollTwitch().catch(console.error);
   pollTikTok().catch(console.error);
 

@@ -496,6 +496,11 @@ function normalizeStreamChannel(platform, channel) {
     );
   }
 
+  if (platform === 'Kick') {
+    if (!parts[0]) throw new Error('Kick sem canal');
+    return 'kick:' + parts[0].toLowerCase();
+  }
+
   if (platform === 'Twitch') {
     if (!parts[0]) {
       throw new Error('Twitch sem canal');
@@ -684,6 +689,7 @@ function validStream(item) {
   ) return false;
 
   const hosts = {
+    Kick: ['kick.com', 'www.kick.com'],
     Twitch: [
       'twitch.tv',
       'www.twitch.tv'
@@ -826,7 +832,7 @@ app.delete(
 
     if (
       !validDiscordId(discordId) ||
-      !['Twitch', 'YouTube', 'TikTok'].includes(platform) ||
+      !['Twitch', 'YouTube', 'TikTok', 'Kick'].includes(platform) ||
       typeof channel !== 'string'
     ) {
       return res.status(400).json({
@@ -884,7 +890,7 @@ app.patch(
 
     if (
       !validDiscordId(discordId) ||
-      !['Twitch', 'YouTube', 'TikTok'].includes(platform) ||
+      !['Twitch', 'YouTube', 'TikTok', 'Kick'].includes(platform) ||
       typeof channel !== 'string' ||
       typeof live !== 'boolean'
     ) {

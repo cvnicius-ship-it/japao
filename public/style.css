@@ -963,3 +963,30 @@ footer {
   }
 }
 
+
+/* CENTRAL DE LIVES */
+#lives .live-summary {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:22px}
+#lives .live-summary div {background:#19191f;border:1px solid #303039;border-radius:12px;padding:18px;display:grid;gap:6px}
+#lives .live-summary strong {font:900 42px 'Barlow Condensed',sans-serif;line-height:1}
+#lives .live-summary span {font-size:10px;font-weight:800;letter-spacing:1px;color:#b0b0bb}
+#lives .live-summary div:first-child strong,#lives .live-summary div:first-child span {color:#53db87}
+#lives .live-filters {display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+#lives .live-filters button {background:#19191f;color:#ccc;border:1px solid #383842;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700}
+#lives .live-filters button[aria-pressed=true] {background:#b91e2b;color:white;border-color:#e72e39}
+#lives .stream-card {--platform:#ddd;border-radius:14px;transition:transform .2s,border-color .2s}
+#lives .stream-card[data-platform=kick] {--platform:#53fc18}
+#lives .stream-card[data-platform=twitch] {--platform:#b18aff}
+#lives .stream-card[data-platform=youtube] {--platform:#ff5252}
+#lives .stream-card[data-platform=tiktok] {--platform:#54e5e5}
+#lives .stream-card[data-live=true] {border-color:#34774d}
+#lives .stream-card:hover {transform:translateY(-3px);border-color:var(--platform)}
+#lives .stream-preview {height:145px;font-size:clamp(34px,6vw,62px);color:var(--platform);background:radial-gradient(ellipse at 50% 100%,#30232c,#141419 75%)}
+#lives .live-badge {font:800 10px Inter,sans-serif;color:#ddd;border-radius:6px}
+#lives .live-badge.active {background:#153c27;color:#7cf5a7;box-shadow:0 0 16px #37d87535}
+#lives .stream-info {flex-wrap:wrap}
+#lives .stream-info > div {min-width:0;overflow-wrap:anywhere}
+#lives .stream-info a {border-radius:7px;color:var(--platform);border-color:var(--platform)}
+#lives .stream-card[data-live=true] .stream-info a {background:var(--platform);color:#101015}
+@media(max-width:600px){#lives .stream-grid{grid-template-columns:1fr}#lives .live-summary{gap:6px}#lives .live-summary div{padding:10px}#lives .live-summary span{font-size:9px;letter-spacing:0}#lives .live-summary strong{font-size:32px}}
+
+

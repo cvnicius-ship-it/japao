@@ -7,10 +7,8 @@
   <meta name="theme-color" content="#0b0b0f">
   <title>Tropa do Japão | Portal Oficial</title>
   <link rel="stylesheet" href="style.css">
-</head>
-
   <link rel="icon" type="image/png" href="/tropa-do-japao.png">
-<link rel="shortcut icon" href="/favicon.ico">
+</head>
 <body>
 
   <!-- MENU -->
@@ -151,7 +149,7 @@
             <p>
               Acompanhe nossos criadores
               de conteúdo na Twitch,
-              TikTok e YouTube.
+              TikTok, YouTube e Kick.
             </p>
           </div>
 
@@ -160,6 +158,20 @@
           </span>
         </div>
 
+        <div class="live-summary" aria-live="polite">
+          <div><strong id="streamsOnline">—</strong><span>● AO VIVO</span></div>
+          <div><strong id="streamsOffline">—</strong><span>● OFFLINE</span></div>
+          <div><strong id="streamsTotal">—</strong><span>CANAIS CADASTRADOS</span></div>
+        </div>
+        <div class="live-filters" aria-label="Filtrar transmissões">
+          <button type="button" data-live-filter="Todos" aria-pressed="true">Todos</button>
+          <button type="button" data-live-filter="Ao vivo" aria-pressed="false">Ao vivo</button>
+          <button type="button" data-live-filter="Offline" aria-pressed="false">Offline</button>
+          <button type="button" data-live-filter="TikTok" aria-pressed="false">TikTok</button>
+          <button type="button" data-live-filter="Twitch" aria-pressed="false">Twitch</button>
+          <button type="button" data-live-filter="YouTube" aria-pressed="false">YouTube</button>
+          <button type="button" data-live-filter="Kick" aria-pressed="false">Kick</button>
+        </div>
         <div
           class="cards stream-grid"
           id="streamsGrid"
@@ -168,7 +180,7 @@
         <p class="hint">
           O BOT DIV monitora automaticamente
           as transmissões configuradas
-          para Twitch e TikTok.
+          para Twitch, TikTok e Kick quando configuradas. O YouTube utiliza os comandos manuais do bot.
         </p>
       </div>
     </section>
