@@ -8,12 +8,19 @@ const {
   Routes,
   SlashCommandBuilder,
   EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   MessageFlags,
   Events
 } = require('discord.js');
 
 const fs = require('fs');
 const path = require('path');
+
+// =====================================
+// CONFIGURAÇÕES
+// =====================================
 
 const file = path.join(__dirname, 'data', 'streams.json');
 
@@ -24,14 +31,28 @@ const CHANNEL =
 const SITE_URL = (process.env.SITE_URL || '')
   .replace(/\/+$/, '');
 
-fs.mkdirSync(path.dirname(file), { recursive: true });
+const PORTAL =
+  SITE_URL || 'https://japao-e4oy.onrender.com';
+
+const LOGO = PORTAL + '/tropa-do-japao.png';
+
+const COLORS = {
+  Kick: 0x53fc18,
+  Twitch: 0x9146ff,
+  YouTube: 0xff0000,
+  TikTok: 0x25f4ee
+};
+
+fs.mkdirSync(path.dirname(file), {
+  recursive: true
+});
 
 if (!fs.existsSync(file)) {
   fs.writeFileSync(file, '[]');
 }
 
 // =====================================
-// ARQUIVOS
+// BANCO DE DADOS LOCAL
 // =====================================
 
 function read() {
@@ -80,13 +101,13 @@ function normalizeChannel(platform, channel) {
   }
 
   if (platform === 'Kick') {
-    return 'Kick:' + (pathname.split('/').filter(Boolean)[0] || '');
+    return 'Kick:' +
+      (pathname.split('/').filter(Boolean)[0] || '');
   }
 
   if (platform === 'Twitch') {
-    pathname = '/' + (
-      pathname.split('/').filter(Boolean)[0] || ''
-    );
+    pathname = '/' +
+      (pathname.split('/').filter(Boolean)[0] || '');
   }
 
   return (
@@ -140,25 +161,36 @@ function displayName(item) {
   return (
     item.channelName ||
     channelHandle(item.platform, item.channel) ||
-    item.name
+    item.name ||
+    'Membro'
   );
 }
+
+// =====================================
+// VALIDAR LINKS
+// =====================================
 
 function validUrl(platform, value) {
   try {
     const url = new URL(value);
 
     const hosts = {
-      Kick: ['kick.com', 'www.kick.com'],
+      Kick: [
+        'kick.com',
+        'www.kick.com'
+      ],
+
       TikTok: [
         'tiktok.com',
         'www.tiktok.com',
         'm.tiktok.com'
       ],
+
       Twitch: [
         'twitch.tv',
         'www.twitch.tv'
       ],
+
       YouTube: [
         'youtube.com',
         'www.youtube.com',
@@ -177,6 +209,7 @@ function validUrl(platform, value) {
       ) &&
       url.pathname.length > 1
     );
+
   } catch {
     return false;
   }
@@ -189,7 +222,7 @@ function validUrl(platform, value) {
 async function siteSync(method, endpoint, payload) {
   if (!SITE_URL || !process.env.BOT_SYNC_SECRET) {
     throw new Error(
-      'Configure SITE_URL e BOT_SYNC_SECRET no .env'
+      'Configure SITE_URL e BOT_SYNC_SECRET'
     );
   }
 
@@ -201,12 +234,15 @@ async function siteSync(method, endpoint, payload) {
         SITE_URL + '/api/bot/streams' + endpoint,
         {
           method,
+
           headers: {
             'Content-Type': 'application/json',
             Authorization:
               'Bearer ' + process.env.BOT_SYNC_SECRET
           },
+
           body: JSON.stringify(payload),
+
           signal: AbortSignal.timeout(30000)
         }
       );
@@ -233,7 +269,7 @@ async function siteSync(method, endpoint, payload) {
 }
 
 // =====================================
-// DISCORD
+// CLIENTE DISCORD
 // =====================================
 
 const client = new Client({
@@ -271,12 +307,13 @@ function channelOption(command) {
 }
 
 // =====================================
-// COMANDO /LIVE
+// COMANDOS /LIVE
 // =====================================
 
 const command = new SlashCommandBuilder()
+
   .setName('live')
-  .setDescription('Gerenciar lives da Tropa do Japao')
+  .setDescription('Central de lives da Tropa do Japao')
 
   .addSubcommand(sub =>
     platformOption(
@@ -284,12 +321,14 @@ const command = new SlashCommandBuilder()
         .setName('cadastrar')
         .setDescription('Cadastrar seu canal')
     )
+
     .addStringOption(option =>
       option
         .setName('url')
         .setDescription('Link do canal')
         .setRequired(true)
     )
+
     .addStringOption(option =>
       option
         .setName('nome')
@@ -335,10 +374,11 @@ const command = new SlashCommandBuilder()
   );
 
 // =====================================
-// ANÚNCIOS NO DISCORD
+// NOVO VISUAL DOS ANÚNCIOS
 // =====================================
 
 async function announce(item) {
+
   const channel = await client.channels.fetch(CHANNEL);
 
   if (
@@ -351,40 +391,135 @@ async function announce(item) {
     );
   }
 
+  if (!validUrl(item.platform, item.channel)) {
+    throw new Error('Link do canal inválido');
+  }
+
+  const name = String(
+    displayName(item)
+  ).slice(0, 100);
+
+  let avatar = LOGO;
+
+  try {
+    if (channel.guild && item.discordId) {
+      const member = await channel.guild.members.fetch(
+        String(item.discordId)
+      );
+
+      avatar = member.displayAvatarURL({
+        size: 256
+      });
+    }
+  } catch {
+    avatar = LOGO;
+  }
+
   const embed = new EmbedBuilder()
-    .setColor(0xd92032)
-    .setTitle('🔴 MEMBRO AO VIVO — TROPA DO JAPÃO 🇯🇵')
-    .setDescription(
-      '**' + displayName(item) +
-      '** está transmitindo na **' +
-      item.platform + '**!\n\n' +
-      '[🔴 ASSISTIR AGORA](' + item.channel + ')'
+
+    .setColor(
+      COLORS[item.platform] || 0xd92032
     )
+
+    .setAuthor({
+      name: '🇯🇵 TROPA DO JAPÃO | CENTRAL DE LIVES',
+      iconURL: LOGO
+    })
+
+    .setTitle(
+      '🔴 ' + name.toUpperCase() + ' ESTÁ AO VIVO!'
+    )
+
+    .setURL(item.channel)
+
+    .setDescription(
+      '**UMA NOVA TRANSMISSÃO COMEÇOU!**\n\n' +
+      'Chega junto, fortalece nossa tropa e ' +
+      'acompanhe mais uma transmissão ao vivo.\n\n' +
+      '🇯🇵 União, respeito e presença.'
+    )
+
     .addFields(
       {
-        name: 'Cidade',
+        name: '👤 Streamer',
+        value: name,
+        inline: true
+      },
+      {
+        name: '📺 Plataforma',
+        value: item.platform,
+        inline: true
+      },
+      {
+        name: '🟢 Status',
+        value: 'AO VIVO',
+        inline: true
+      },
+      {
+        name: '📍 Cidade',
         value: 'Lado Leste RP',
         inline: true
       },
       {
-        name: 'Plataforma',
-        value: item.platform,
+        name: '⏰ Anunciada',
+        value: '<t:' +
+          Math.floor(Date.now() / 1000) +
+          ':R>',
         inline: true
       }
     )
+
+    .setThumbnail(avatar)
+
+    .setImage(
+      process.env.LIVE_BANNER_URL || LOGO
+    )
+
+    .setFooter({
+      text: 'Tropa do Japão • Sistema de divulgação',
+      iconURL: LOGO
+    })
+
     .setTimestamp();
+
+  const buttons = new ActionRowBuilder()
+    .addComponents(
+
+      new ButtonBuilder()
+        .setLabel('Assistir live')
+        .setEmoji('▶️')
+        .setStyle(ButtonStyle.Link)
+        .setURL(item.channel),
+
+      new ButtonBuilder()
+        .setLabel('Portal oficial')
+        .setEmoji('🌐')
+        .setStyle(ButtonStyle.Link)
+        .setURL(PORTAL + '/#lives')
+
+    );
 
   await channel.send({
     embeds: [embed],
-    allowedMentions: { parse: [] }
+    components: [buttons],
+    allowedMentions: {
+      parse: []
+    }
   });
+
+  console.log(
+    '📢 Anúncio enviado:',
+    name,
+    item.platform
+  );
 }
 
 // =====================================
-// EXECUTAR /LIVE
+// EXECUTAR COMANDOS
 // =====================================
 
 client.on(Events.InteractionCreate, async interaction => {
+
   if (
     !interaction.isChatInputCommand() ||
     interaction.commandName !== 'live'
@@ -393,11 +528,13 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 
   try {
+
     await interaction.deferReply({
       flags: MessageFlags.Ephemeral
     });
 
     const sub = interaction.options.getSubcommand();
+
     const platform =
       interaction.options.getString('plataforma');
 
@@ -408,15 +545,19 @@ client.on(Events.InteractionCreate, async interaction => {
     const uid = interaction.user.id;
     const items = read();
 
-    // LISTAR
+    // =====================================
+    // LISTAR CANAIS
+    // =====================================
+
     if (sub === 'listar') {
+
       const own = items.filter(
         item => String(item.discordId) === uid
       );
 
       if (!own.length) {
         return interaction.editReply(
-          'Nenhum canal cadastrado.'
+          '❌ Nenhum canal cadastrado.'
         );
       }
 
@@ -433,8 +574,12 @@ client.on(Events.InteractionCreate, async interaction => {
       );
     }
 
-    // CADASTRAR
+    // =====================================
+    // CADASTRAR CANAL
+    // =====================================
+
     if (sub === 'cadastrar') {
+
       if (!validUrl(platform, url)) {
         return interaction.editReply(
           '❌ Link inválido. Envie a URL completa.'
@@ -452,13 +597,6 @@ client.on(Events.InteractionCreate, async interaction => {
         channelHandle(platform, url) ||
         name;
 
-      const old = findItem(
-        items,
-        uid,
-        platform,
-        url
-      );
-
       await siteSync('POST', '', {
         discordId: uid,
         name,
@@ -467,11 +605,22 @@ client.on(Events.InteractionCreate, async interaction => {
         channel: url
       });
 
+      const latest = read();
+
+      const old = findItem(
+        latest,
+        uid,
+        platform,
+        url
+      );
+
       if (old) {
         old.name = name;
         old.channelName = channelName;
+
       } else {
-        items.push({
+
+        latest.push({
           discordId: uid,
           name,
           channelName,
@@ -483,17 +632,20 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      write(items);
+      write(latest);
 
       return interaction.editReply(
-        '✅ Canal cadastrado!\n' +
+        '✅ Canal cadastrado com sucesso!\n\n' +
         '👤 ' + channelName + '\n' +
         '📺 ' + platform + '\n' +
-        url
+        '🔗 ' + url
       );
     }
 
-    // LOCALIZAR
+    // =====================================
+    // LOCALIZAR CANAL
+    // =====================================
+
     const item = findItem(
       items,
       uid,
@@ -508,23 +660,39 @@ client.on(Events.InteractionCreate, async interaction => {
       );
     }
 
-    // REMOVER
+    // =====================================
+    // REMOVER CANAL
+    // =====================================
+
     if (sub === 'remover') {
+
       await siteSync('DELETE', '', {
         discordId: uid,
         platform,
         channel: item.channel
       });
 
-      write(items.filter(x => x !== item));
+      const latest = read();
+
+      write(latest.filter(x =>
+        !(
+          String(x.discordId) === uid &&
+          x.platform === platform &&
+          sameChannel(platform, x.channel, item.channel)
+        )
+      ));
 
       return interaction.editReply(
         '🗑️ Canal removido: ' + displayName(item)
       );
     }
 
-    // ANUNCIAR
+    // =====================================
+    // ANUNCIAR MANUALMENTE
+    // =====================================
+
     if (sub === 'anunciar') {
+
       const now = Date.now();
 
       if (
@@ -545,33 +713,55 @@ client.on(Events.InteractionCreate, async interaction => {
         lastAnnounced: String(now)
       });
 
-      item.live = true;
-      item.lastManual = now;
-      item.lastAnnounced = String(now);
+      const latest = read();
 
-      write(items);
+      const target = findItem(
+        latest,
+        uid,
+        platform,
+        item.channel
+      );
+
+      if (!target) {
+        return interaction.editReply(
+          'Canal não encontrado.'
+        );
+      }
+
+      target.live = true;
+      target.lastManual = now;
+      target.lastAnnounced = String(now);
+
+      write(latest);
 
       try {
-        await announce(item);
+
+        await announce(target);
 
         return interaction.editReply(
-          '🔴 ' + displayName(item) +
+          '🔴 ' + displayName(target) +
           ' AO VIVO no site e Discord!'
         );
+
       } catch (error) {
+
         console.error(
           'Erro no anúncio:',
           error.message
         );
 
         return interaction.editReply(
-          '🔴 Site atualizado, mas o anúncio falhou.'
+          'Site atualizado, mas o anúncio falhou.'
         );
       }
     }
 
-    // ENCERRAR
+    // =====================================
+    // ENCERRAR LIVE
+    // =====================================
+
     if (sub === 'encerrar') {
+
       await siteSync('PATCH', '/status', {
         discordId: uid,
         platform,
@@ -580,11 +770,22 @@ client.on(Events.InteractionCreate, async interaction => {
         lastAnnounced: ''
       });
 
-      item.live = false;
-      item.lastManual = 0;
-      item.lastAnnounced = '';
+      const latest = read();
 
-      write(items);
+      const target = findItem(
+        latest,
+        uid,
+        platform,
+        item.channel
+      );
+
+      if (target) {
+        target.live = false;
+        target.lastManual = 0;
+        target.lastAnnounced = '';
+
+        write(latest);
+      }
 
       return interaction.editReply(
         '⚫ ' + displayName(item) +
@@ -593,6 +794,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
   } catch (error) {
+
     console.error(
       'Erro no comando /live:',
       error.message
@@ -608,6 +810,76 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // =====================================
+// SINCRONIZAR STATUS DAS LIVES
+// =====================================
+
+async function syncLive(item, isLive, streamId) {
+
+  const current = findItem(
+    read(),
+    item.discordId,
+    item.platform,
+    item.channel
+  );
+
+  if (!current) return;
+
+  const changed = current.live !== isLive;
+
+  const lastAnnounced = isLive
+    ? (
+        changed
+          ? String(streamId || Date.now())
+          : current.lastAnnounced || ''
+      )
+    : '';
+
+  await siteSync('PATCH', '/status', {
+    discordId: current.discordId,
+    platform: current.platform,
+    channel: current.channel,
+    live: isLive,
+    lastAnnounced
+  });
+
+  const latest = read();
+
+  const target = findItem(
+    latest,
+    item.discordId,
+    item.platform,
+    item.channel
+  );
+
+  if (!target) return;
+
+  target.live = isLive;
+  target.lastAnnounced = lastAnnounced;
+  target.lastManual = 0;
+
+  write(latest);
+
+  if (changed || item.platform === 'TikTok') {
+    console.log(
+      '🇯🇵 ' + item.platform + ' sincronizado:',
+      displayName(target),
+      isLive ? '🔴 AO VIVO' : '⚫ OFFLINE'
+    );
+  }
+
+  if (changed && isLive) {
+    try {
+      await announce(target);
+    } catch (error) {
+      console.error(
+        'Erro no anúncio ' + item.platform + ':',
+        error.message
+      );
+    }
+  }
+}
+
+// =====================================
 // TWITCH AUTOMÁTICO
 // =====================================
 
@@ -616,6 +888,7 @@ let twitchExpiry = 0;
 let pollingTwitch = false;
 
 async function twitchAuth() {
+
   if (
     twitchToken &&
     Date.now() < twitchExpiry
@@ -632,28 +905,33 @@ async function twitchAuth() {
     'https://id.twitch.tv/oauth2/token',
     {
       method: 'POST',
+
       headers: {
         'Content-Type':
           'application/x-www-form-urlencoded'
       },
+
       body: new URLSearchParams({
         client_id: id,
         client_secret: secret,
         grant_type: 'client_credentials'
       }),
+
       signal: AbortSignal.timeout(15000)
     }
   );
 
   if (!response.ok) {
     throw new Error(
-      'Erro autenticando Twitch'
+      'Erro autenticando Twitch: ' +
+      response.status
     );
   }
 
   const data = await response.json();
 
   twitchToken = data.access_token;
+
   twitchExpiry =
     Date.now() +
     Math.max(0, data.expires_in - 120) * 1000;
@@ -662,6 +940,7 @@ async function twitchAuth() {
 }
 
 async function pollTwitch() {
+
   if (
     pollingTwitch ||
     !process.env.TWITCH_CLIENT_ID ||
@@ -671,6 +950,7 @@ async function pollTwitch() {
   pollingTwitch = true;
 
   try {
+
     const targets = read().filter(
       item => item.platform === 'Twitch'
     );
@@ -680,7 +960,9 @@ async function pollTwitch() {
     const token = await twitchAuth();
 
     for (const item of targets) {
+
       try {
+
         const login = channelHandle(
           'Twitch',
           item.channel
@@ -695,87 +977,42 @@ async function pollTwitch() {
             headers: {
               'Client-ID':
                 process.env.TWITCH_CLIENT_ID,
-              Authorization: 'Bearer ' + token
+
+              Authorization:
+                'Bearer ' + token
             },
+
             signal: AbortSignal.timeout(15000)
           }
         );
 
         if (!response.ok) {
+
+          if (response.status === 401) {
+            twitchToken = '';
+          }
+
           throw new Error(
             'Twitch HTTP ' + response.status
           );
         }
 
         const data = await response.json();
-        const stream = data.data?.[0];
-        const isLive = Boolean(stream);
 
-        const current = findItem(
-          read(),
-          item.discordId,
-          'Twitch',
-          item.channel
-        );
-
-        if (!current) continue;
-
-        const changed = current.live !== isLive;
-
-        const announcementId = isLive
-          ? (
-              changed
-                ? String(stream.id)
-                : current.lastAnnounced || ''
-            )
-          : '';
-
-        // Sempre atualiza o site.
-        await siteSync('PATCH', '/status', {
-          discordId: current.discordId,
-          platform: 'Twitch',
-          channel: current.channel,
-          live: isLive,
-          lastAnnounced: announcementId
-        });
-
-        const latest = read();
-
-        const target = findItem(
-          latest,
-          item.discordId,
-          'Twitch',
-          item.channel
-        );
-
-        if (!target) continue;
-
-        target.live = isLive;
-        target.lastAnnounced = announcementId;
-        target.lastManual = 0;
-
-        write(latest);
-
-        if (changed) {
-          console.log(
-            'Twitch atualizado:',
-            login,
-            isLive ? 'AO VIVO' : 'OFFLINE'
-          );
+        if (!Array.isArray(data.data)) {
+          continue;
         }
 
-        if (changed && isLive) {
-          try {
-            await announce(target);
-          } catch (error) {
-            console.error(
-              'Anúncio Twitch:',
-              error.message
-            );
-          }
-        }
+        const stream = data.data[0];
+
+        await syncLive(
+          item,
+          Boolean(stream),
+          stream?.id
+        );
 
       } catch (error) {
+
         console.error(
           'Erro Twitch:',
           error.message
@@ -784,17 +1021,19 @@ async function pollTwitch() {
     }
 
   } catch (error) {
+
     console.error(
       'Monitoramento Twitch:',
       error.message
     );
+
   } finally {
     pollingTwitch = false;
   }
 }
 
 // =====================================
-// TIKTOK AUTOMÁTICO CORRIGIDO
+// TIKTOK AUTOMÁTICO
 // =====================================
 
 let checkingTikTok = false;
@@ -802,20 +1041,26 @@ let checkingTikTok = false;
 const tiktokObservations = new Map();
 
 async function pollTikTok() {
+
   if (checkingTikTok) return;
 
   checkingTikTok = true;
 
   try {
+
     let TikTokLiveConnection;
 
     try {
+
       ({ TikTokLiveConnection } =
         require('tiktok-live-connector'));
+
     } catch {
+
       console.error(
         'Instale: npm install tiktok-live-connector'
       );
+
       return;
     }
 
@@ -824,21 +1069,21 @@ async function pollTikTok() {
     );
 
     for (const item of targets) {
-      const key =
-        item.discordId + ':TikTok:' +
-        normalizeChannel('TikTok', item.channel);
+
+      let key;
 
       try {
+
+        key =
+          item.discordId + ':TikTok:' +
+          normalizeChannel('TikTok', item.channel);
+
         const username = channelHandle(
           'TikTok',
           item.channel
         ).replace(/^@/, '');
 
         if (!/^[a-zA-Z0-9._]{2,24}$/.test(username)) {
-          console.log(
-            'TikTok inválido:',
-            username
-          );
           continue;
         }
 
@@ -849,34 +1094,44 @@ async function pollTikTok() {
           }
         );
 
-        const result = await Promise.race([
-          connection.fetchIsLive(),
+        let timeout;
 
-          new Promise((_, reject) => {
-            setTimeout(() => {
-              reject(
-                new Error('Tempo esgotado TikTok')
-              );
-            }, 12000);
-          })
-        ]);
+        let result;
+
+        try {
+
+          result = await Promise.race([
+            connection.fetchIsLive(),
+
+            new Promise((_, reject) => {
+              timeout = setTimeout(() => {
+                reject(
+                  new Error('Tempo esgotado TikTok')
+                );
+              }, 12000);
+            })
+          ]);
+
+        } finally {
+          clearTimeout(timeout);
+        }
 
         if (typeof result !== 'boolean') {
-          console.log(
-            'TikTok inconclusivo:',
-            username
-          );
 
           tiktokObservations.delete(key);
+
           continue;
         }
 
         const isLive = result;
-        const previous = tiktokObservations.get(key);
 
-        const count = previous?.value === isLive
-          ? previous.count + 1
-          : 1;
+        const previous =
+          tiktokObservations.get(key);
+
+        const count =
+          previous?.value === isLive
+            ? previous.count + 1
+            : 1;
 
         tiktokObservations.set(key, {
           value: isLive,
@@ -891,142 +1146,188 @@ async function pollTikTok() {
           count
         );
 
-        // Duas verificações consecutivas.
+        // Duas confirmações consecutivas
         if (count < 2) continue;
 
-        const current = findItem(
-          read(),
-          item.discordId,
-          'TikTok',
-          item.channel
+        await syncLive(
+          item,
+          isLive,
+          Date.now()
         );
-
-        if (!current) continue;
-
-        const changed = current.live !== isLive;
-
-        const announcementId = isLive
-          ? (
-              changed
-                ? String(Date.now())
-                : current.lastAnnounced || ''
-            )
-          : '';
-
-        // CORREÇÃO:
-        // Sincronizar sempre com o site.
-        await siteSync('PATCH', '/status', {
-          discordId: current.discordId,
-          platform: 'TikTok',
-          channel: current.channel,
-          live: isLive,
-          lastAnnounced: announcementId
-        });
-
-        const latest = read();
-
-        const target = findItem(
-          latest,
-          item.discordId,
-          'TikTok',
-          item.channel
-        );
-
-        if (!target) continue;
-
-        target.live = isLive;
-        target.lastAnnounced = announcementId;
-        target.lastManual = 0;
-
-        write(latest);
-
-        console.log(
-          '🇯🇵 TikTok sincronizado:',
-          username,
-          isLive ? '🔴 AO VIVO' : '⚫ OFFLINE'
-        );
-
-        // Anunciar somente quando começar.
-        if (changed && isLive) {
-          try {
-            await announce(target);
-          } catch (error) {
-            console.error(
-              'Anúncio TikTok:',
-              error.message
-            );
-          }
-        }
 
       } catch (error) {
+
         console.error(
           'Erro TikTok:',
-          channelHandle(
-            'TikTok',
-            item.channel
-          ),
+          channelHandle('TikTok', item.channel),
           error.message
         );
 
-        tiktokObservations.delete(key);
+        if (key) {
+          tiktokObservations.delete(key);
+        }
       }
     }
 
   } catch (error) {
+
     console.error(
       'Erro geral TikTok:',
       error.message
     );
+
   } finally {
     checkingTikTok = false;
   }
 }
 
-// KICK - API oficial (credenciais opcionais)
-let kickToken = '', kickExpiry = 0, pollingKick = false;
+// =====================================
+// KICK AUTOMÁTICO
+// =====================================
+
+let kickToken = '';
+let kickExpiry = 0;
+let pollingKick = false;
+
 async function pollKick() {
-  if (pollingKick || !process.env.KICK_CLIENT_ID || !process.env.KICK_CLIENT_SECRET) return;
+
+  if (
+    pollingKick ||
+    !process.env.KICK_CLIENT_ID ||
+    !process.env.KICK_CLIENT_SECRET
+  ) return;
+
   pollingKick = true;
+
   try {
-    const targets = read().filter(x => x.platform === 'Kick');
+
+    const targets = read().filter(
+      item => item.platform === 'Kick'
+    );
+
     if (!targets.length) return;
+
     if (!kickToken || Date.now() >= kickExpiry) {
-      const response = await fetch('https://id.kick.com/oauth/token', {
-        method: 'POST', body: new URLSearchParams({client_id: process.env.KICK_CLIENT_ID, client_secret: process.env.KICK_CLIENT_SECRET, grant_type: 'client_credentials'}), signal: AbortSignal.timeout(15000)
-      });
-      if (!response.ok) throw new Error('Kick OAuth HTTP ' + response.status);
+
+      const response = await fetch(
+        'https://id.kick.com/oauth/token',
+        {
+          method: 'POST',
+
+          body: new URLSearchParams({
+            client_id:
+              process.env.KICK_CLIENT_ID,
+
+            client_secret:
+              process.env.KICK_CLIENT_SECRET,
+
+            grant_type:
+              'client_credentials'
+          }),
+
+          signal: AbortSignal.timeout(15000)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Kick OAuth HTTP ' + response.status
+        );
+      }
+
       const auth = await response.json();
+
       kickToken = auth.access_token;
-      kickExpiry = Date.now() + Math.max(0, auth.expires_in - 60) * 1000;
+
+      kickExpiry =
+        Date.now() +
+        Math.max(0, auth.expires_in - 60) * 1000;
     }
+
     for (const item of targets) {
+
       try {
-        const slug = channelHandle('Kick', item.channel).toLowerCase();
-        const response = await fetch('https://api.kick.com/public/v1/channels?slug=' + encodeURIComponent(slug), {headers: {Authorization: 'Bearer ' + kickToken}, signal: AbortSignal.timeout(15000)});
-        if (!response.ok) { if (response.status === 401) kickToken = ''; throw new Error('Kick HTTP ' + response.status); }
+
+        const slug = channelHandle(
+          'Kick',
+          item.channel
+        ).toLowerCase();
+
+        if (!slug) continue;
+
+        const response = await fetch(
+          'https://api.kick.com/public/v1/channels?slug=' +
+          encodeURIComponent(slug),
+          {
+            headers: {
+              Authorization:
+                'Bearer ' + kickToken
+            },
+
+            signal: AbortSignal.timeout(15000)
+          }
+        );
+
+        if (!response.ok) {
+
+          if (response.status === 401) {
+            kickToken = '';
+          }
+
+          throw new Error(
+            'Kick HTTP ' + response.status
+          );
+        }
+
         const data = await response.json();
-        const channel = data.data?.find(x => String(x.slug).toLowerCase() === slug);
-        if (typeof channel?.stream?.is_live !== 'boolean') continue;
+
+        const channel = data.data?.find(
+          x => String(x.slug).toLowerCase() === slug
+        );
+
+        if (
+          typeof channel?.stream?.is_live !== 'boolean'
+        ) {
+          continue;
+        }
+
         const live = channel.stream.is_live;
-        const current = findItem(read(), item.discordId, 'Kick', item.channel);
-        if (!current) continue;
-        const changed = current.live !== live;
-        const lastAnnounced = live ? (current.lastAnnounced || String(Date.now())) : '';
-        await siteSync('PATCH', '/status', {discordId: current.discordId, platform: 'Kick', channel: current.channel, live, lastAnnounced});
-        const latest = read();
-        const target = findItem(latest, item.discordId, 'Kick', item.channel);
-        if (!target) continue;
-        Object.assign(target, {live, lastAnnounced, lastManual: 0});
-        write(latest);
-        if (changed && live) await announce(target);
-      } catch (error) { console.error('Kick:', error.message); }
+
+        console.log(
+          '🟢 Kick verificado:',
+          slug,
+          live ? 'AO VIVO' : 'OFFLINE'
+        );
+
+        await syncLive(
+          item,
+          live,
+          Date.now()
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Erro Kick:',
+          error.message
+        );
+      }
     }
-  } catch (error) { console.error('Monitoramento Kick:', error.message); }
-  finally { pollingKick = false; }
+
+  } catch (error) {
+
+    console.error(
+      'Monitoramento Kick:',
+      error.message
+    );
+
+  } finally {
+    pollingKick = false;
+  }
 }
 
 // =====================================
-// ONLINE / OFFLINE DISCORD
+// ONLINE E OFFLINE DO DISCORD
 // =====================================
 
 const onlineStatuses = new Set([
@@ -1041,6 +1342,7 @@ let syncingPresence = false;
 let flushingPresence = false;
 
 async function sendPresence(endpoint, payload) {
+
   if (!SITE_URL || !process.env.BOT_SYNC_SECRET) {
     throw new Error(
       'Configure SITE_URL e BOT_SYNC_SECRET'
@@ -1051,17 +1353,22 @@ async function sendPresence(endpoint, payload) {
     SITE_URL + '/api/bot/presence' + endpoint,
     {
       method: 'POST',
+
       headers: {
         'Content-Type': 'application/json',
+
         Authorization:
           'Bearer ' + process.env.BOT_SYNC_SECRET
       },
+
       body: JSON.stringify(payload),
+
       signal: AbortSignal.timeout(30000)
     }
   );
 
   if (!response.ok) {
+
     const detail = await response.text()
       .catch(() => '');
 
@@ -1079,6 +1386,7 @@ async function sendPresence(endpoint, payload) {
 client.on(
   Events.PresenceUpdate,
   (oldPresence, newPresence) => {
+
     if (!newPresence) return;
 
     const guildId = process.env.DISCORD_GUILD_ID;
@@ -1096,15 +1404,19 @@ client.on(
       newPresence.status
     );
 
-    pendingPresence.set(discordId, online);
+    pendingPresence.set(
+      discordId,
+      online
+    );
   }
 );
 
 // =====================================
-// ENVIAR MUDANÇAS
+// ENVIAR ALTERAÇÕES DE STATUS
 // =====================================
 
 async function flushPresence() {
+
   if (
     flushingPresence ||
     pendingPresence.size === 0
@@ -1113,12 +1425,15 @@ async function flushPresence() {
   flushingPresence = true;
 
   try {
+
     const changes = [
       ...pendingPresence.entries()
     ];
 
     for (const [discordId, online] of changes) {
+
       try {
+
         await sendPresence('', {
           discordId,
           online
@@ -1131,6 +1446,7 @@ async function flushPresence() {
         }
 
       } catch (error) {
+
         console.error(
           'Erro sincronizando presença:',
           discordId,
@@ -1145,21 +1461,25 @@ async function flushPresence() {
 }
 
 // =====================================
-// SINCRONIZAÇÃO COMPLETA DO DISCORD
+// SINCRONIZAR TODOS OS MEMBROS
 // =====================================
 
 async function syncAllPresences() {
+
   if (syncingPresence) return;
 
   syncingPresence = true;
 
   try {
+
     const guildId = process.env.DISCORD_GUILD_ID;
 
     if (!guildId) {
+
       console.error(
         'Configure DISCORD_GUILD_ID no .env'
       );
+
       return;
     }
 
@@ -1177,8 +1497,12 @@ async function syncAllPresences() {
       const presence of
       guild.presences.cache.values()
     ) {
+
       if (onlineStatuses.has(presence.status)) {
-        onlineIds.add(presence.userId);
+
+        onlineIds.add(
+          presence.userId
+        );
       }
     }
 
@@ -1193,10 +1517,12 @@ async function syncAllPresences() {
     );
 
   } catch (error) {
+
     console.error(
       'Erro sincronizando Discord:',
       error.message
     );
+
   } finally {
     syncingPresence = false;
   }
@@ -1207,13 +1533,34 @@ async function syncAllPresences() {
 // =====================================
 
 client.once(Events.ClientReady, async () => {
+
+  console.log(
+    '====================================='
+  );
+
   console.log(
     '🇯🇵 BOT DIV CONECTADO:',
     client.user.tag
   );
 
-  // Registrar /live
+  console.log(
+    '🎨 Novo sistema visual de lives ativo!'
+  );
+
+  console.log(
+    '====================================='
+  );
+
+  // STATUS DO BOT
+
+  client.user.setActivity(
+    'Lives da Tropa do Japão'
+  );
+
+  // REGISTRAR COMANDOS
+
   try {
+
     const rest = new REST({
       version: '10'
     }).setToken(
@@ -1238,39 +1585,71 @@ client.once(Events.ClientReady, async () => {
     );
 
   } catch (error) {
+
     console.error(
       'Erro registrando /live:',
       error.message
     );
   }
 
-  // Monitorar lives
+  // INICIAR MONITORAMENTO
+
   pollKick().catch(console.error);
-  setInterval(() => pollKick().catch(console.error), 120000);
+
   pollTwitch().catch(console.error);
+
   pollTikTok().catch(console.error);
 
+  // KICK A CADA 2 MINUTOS
+
   setInterval(() => {
-    pollTwitch().catch(console.error);
+
+    pollKick().catch(console.error);
+
   }, 120000);
 
+  // TWITCH A CADA 2 MINUTOS
+
   setInterval(() => {
+
+    pollTwitch().catch(console.error);
+
+  }, 120000);
+
+  // TIKTOK A CADA 1 MINUTO
+
+  setInterval(() => {
+
     pollTikTok().catch(console.error);
+
   }, 60000);
 
-  // Monitorar presenças
+  // PRESENÇAS DO DISCORD
+
   await syncAllPresences();
 
   setInterval(() => {
+
     flushPresence().catch(console.error);
+
   }, 3000);
 
   setInterval(() => {
+
     syncAllPresences().catch(console.error);
+
   }, 60000);
 
   console.log(
     '🟢 Sistema ONLINE/OFFLINE iniciado!'
+  );
+
+  console.log(
+    '🟢 Kick, Twitch e TikTok configurados!'
+  );
+
+  console.log(
+    '🔴 YouTube disponível no modo manual!'
   );
 });
 
@@ -1279,6 +1658,7 @@ client.once(Events.ClientReady, async () => {
 // =====================================
 
 client.on('error', error => {
+
   console.error(
     'Erro Discord:',
     error.message
@@ -1286,10 +1666,11 @@ client.on('error', error => {
 });
 
 // =====================================
-// LOGIN
+// LOGIN DO BOT
 // =====================================
 
 if (!process.env.DISCORD_BOT_TOKEN) {
+
   console.error(
     'Configure DISCORD_BOT_TOKEN no .env'
   );
@@ -1297,12 +1678,14 @@ if (!process.env.DISCORD_BOT_TOKEN) {
   process.exit(1);
 }
 
-client.login(process.env.DISCORD_BOT_TOKEN)
-  .catch(error => {
-    console.error(
-      'Falha ao conectar bot:',
-      error.message
-    );
+client.login(
+  process.env.DISCORD_BOT_TOKEN
+).catch(error => {
 
-    process.exitCode = 1;
-  });
+  console.error(
+    'Falha ao conectar bot:',
+    error.message
+  );
+
+  process.exitCode = 1;
+});
