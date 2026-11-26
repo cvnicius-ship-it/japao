@@ -1,7 +1,8 @@
-
-
 const crypto = require('crypto');
 const multer = require('multer');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 module.exports = function setupGallery(app, { authorized, redis }) {
 
@@ -10,10 +11,13 @@ module.exports = function setupGallery(app, { authorized, redis }) {
 
   const categories = ['Eventos', 'Veículos', 'Roleplay'];
   const IMAGE_LIMIT = 8 * 1024 * 1024;
-  const VIDEO_LIMIT = 50 * 1024 * 1024;
+  const VIDEO_LIMIT = 200 * 1024 * 1024;
 
   const upload = multer({
-    storage: multer.memoryStorage(),
+    storage: multer.diskStorage({
+      destination: os.tmpdir(),
+      filename: (req, file, cb) => cb(null, 'japao-' + crypto.randomUUID())
+    }),
     limits: {
       fileSize: VIDEO_LIMIT,
       files: 1
@@ -158,42 +162,38 @@ module.exports = function setupGallery(app, { authorized, redis }) {
       )
       .digest('hex');
 
-    const form = new FormData();
-
-    form.append(
-      'file',
-      new Blob([file.buffer], { type: file.mimetype }),
-      file.originalname
-    );
-
-    form.append('api_key', key);
-    form.append('timestamp', String(timestamp));
-    form.append('folder', folder);
-    form.append('signature', signature);
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/${resourceType}/upload`,
-      {
-        method: 'POST',
-        body: form,
-        signal: AbortSignal.timeout(120000)
+    const chunkSize = 10 * 1024 * 1024;
+    const chunked = resourceType === 'video' && file.size > chunkSize;
+    const uploadId = crypto.randomUUID();
+    const handle = await fs.promises.open(file.path, 'r');
+    try {
+      let result;
+      for (let offset = 0; offset < file.size; offset += chunkSize) {
+        const length = Math.min(chunkSize, file.size - offset);
+        const buffer = Buffer.alloc(length);
+        const { bytesRead } = await handle.read(buffer, 0, length, offset);
+        if (bytesRead !== length) throw new Error('Leitura incompleta');
+        const form = new FormData();
+        form.append('file', new Blob([buffer], { type: file.mimetype }), file.originalname);
+        form.append('api_key', key);
+        form.append('timestamp', String(timestamp));
+        form.append('folder', folder);
+        form.append('signature', signature);
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/${resourceType}/upload`,
+          { method: 'POST', body: form,
+            headers: chunked ? { 'X-Unique-Upload-Id': uploadId,
+              'Content-Range': `bytes ${offset}-${offset + length - 1}/${file.size}` } : {},
+            signal: AbortSignal.timeout(120000) }
+        );
+        result = await response.json();
+        if (!response.ok || result.error) throw new Error('Cloudinary upload: ' + JSON.stringify(result).slice(0, 300));
       }
-    );
-
-    const result = await response.json();
-
-    if (
-      !response.ok ||
-      !result.secure_url ||
-      !result.public_id
-    ) {
-      throw new Error(
-        'Cloudinary upload: ' +
-        JSON.stringify(result).slice(0, 300)
-      );
+      if (!result?.secure_url || !result?.public_id) throw new Error('Upload incompleto');
+      return result;
+    } finally {
+      await handle.close();
     }
-
-    return result;
   }
 
   async function destroyCloudinary(publicId, resourceType) {
@@ -341,8 +341,12 @@ module.exports = function setupGallery(app, { authorized, redis }) {
         console.error('Galeria upload:', error.message);
 
         res.status(503).json({
-          error: 'Não foi possível publicar o arquivo'
+          error: 'Não foi possível publicar o arquivo. Confira o limite do Cloudinary e tente novamente.'
         });
+      } finally {
+        for (const file of Object.values(req.files || {}).flat()) {
+          if (file.path) await fs.promises.unlink(file.path).catch(() => {});
+        }
       }
     }
   );
@@ -453,7 +457,7 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     ) {
       return res.status(400).json({
         error: err.code === 'LIMIT_FILE_SIZE'
-          ? 'Arquivo acima de 50 MB'
+          ? 'Arquivo acima de 200 MB'
           : err.message
       });
     }
@@ -461,5 +465,3 @@ module.exports = function setupGallery(app, { authorized, redis }) {
     next(err);
   });
 };
-
-

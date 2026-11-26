@@ -291,7 +291,7 @@ header { background: #101015; border-bottom: 1px solid #ed253b44; box-shadow: 0 
       </select>
 
       <div id="fileFields">
-        <label for="media">Arquivo (foto até 8 MB; MP4 até 50 MB)</label>
+        <label for="media">Arquivo (foto até 8 MB; MP4 até 200 MB)</label>
         <input id="media" name="media" type="file"
           accept="image/jpeg,image/png,image/webp" required>
       </div>
@@ -307,6 +307,7 @@ header { background: #101015; border-bottom: 1px solid #ed253b44; box-shadow: 0 
         PUBLICAR FOTO
       </button>
     </form>
+    <progress id="uploadProgress" max="100" value="0" class="hidden" style="width:100%;accent-color:#ed253b;margin-top:15px"></progress>
     <p id="message" role="status"></p>
   </section>
 
@@ -548,10 +549,10 @@ form.addEventListener('submit', async e => {
     } else {
       const file = mediaInput.files[0];
       const limit = type === 'video'
-        ? 50 * 1024 * 1024 : 8 * 1024 * 1024;
+        ? 200 * 1024 * 1024 : 8 * 1024 * 1024;
       if (!file || file.size > limit) {
         throw new Error('Escolha um arquivo de até ' +
-          (type === 'video' ? '50' : '8') + ' MB');
+          (type === 'video' ? '200' : '8') + ' MB');
       }
       if (type === 'video' && file.type !== 'video/mp4') {
         throw new Error('Selecione um vídeo MP4');
@@ -566,7 +567,30 @@ form.addEventListener('submit', async e => {
       };
     }
 
-    await request(url, options);
+    if (type === 'youtube') await request(url, options);
+    else await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const progress = document.getElementById('uploadProgress');
+      progress.value = 0;
+      progress.classList.remove('hidden');
+      xhr.open('POST', url);
+      xhr.upload.onprogress = event => {
+        if (event.lengthComputable) {
+          const percent = Math.round(event.loaded / event.total * 100);
+          progress.value = percent;
+          message.textContent = percent === 100 ? '100% enviado ao servidor. Processando no Cloudinary...' : 'Enviando: ' + percent + '%';
+        }
+      };
+      xhr.onload = () => {
+        let data;
+        try { data = JSON.parse(xhr.responseText); } catch { data = {}; }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new Error(data.error || 'Falha no upload: HTTP ' + xhr.status));
+      };
+      xhr.onerror = () => reject(new Error('Conexão interrompida durante o envio.'));
+      xhr.onabort = () => reject(new Error('Envio cancelado.'));
+      xhr.send(options.body);
+    });
     selected = document.getElementById('category').value;
     history.replaceState(
       null, '', '?categoria=' + encodeURIComponent(selected)
@@ -578,6 +602,7 @@ form.addEventListener('submit', async e => {
   } catch (err) {
     message.textContent = err.message;
   } finally {
+    document.getElementById('uploadProgress').classList.add('hidden');
     submit.disabled = false;
   }
 });
@@ -590,4 +615,3 @@ form.addEventListener('submit', async e => {
 </script>
 </body>
 </html>
-
