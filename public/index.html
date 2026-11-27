@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portal oficial da Tropa do Japão no FiveM Roleplay. Conheça a equipe, acompanhe lives e explore nossa galeria.">
   <meta name="theme-color" content="#0b0b0f">
   <title>Tropa do Japão | Portal Oficial</title>
   <link rel="stylesheet" href="style.css">
@@ -45,7 +46,7 @@
   <!-- MENU -->
   <header class="nav">
     <a class="brand" href="#inicio">
-      <span class="brand-mark">侍</span>
+      <span class="brand-mark"><img src="/tropa-do-japao.png" alt="" width="44" height="44"></span>
       <span>
         TROPA DO
         <span class="red">JAPÃO</span>
@@ -57,7 +58,7 @@
       class="menu-btn"
       id="menuBtn"
       type="button"
-      aria-label="Abrir menu"
+      aria-label="Abrir menu" aria-controls="navLinks" aria-expanded="false"
     >☰</button>
 
     <nav id="navLinks">
@@ -82,7 +83,7 @@
       <div class="container hero-content">
         <span class="eyebrow">
           <span class="pulse"></span>
-          PORTAL OFICIAL • FIVEM ROLEPLAY
+          LADO LESTE RP • PORTAL OFICIAL
         </span>
 
         <h1>
@@ -91,7 +92,7 @@
         </h1>
 
         <p>
-          União, respeito e presença.
+          Respeito. União. Lealdade.
           Conheça nossa equipe, acompanhe
           as transmissões e faça parte
           da nossa história na cidade.
@@ -131,12 +132,12 @@
         </div>
       </div>
 
-      <div class="hero-art">
-        <img
-          src="tropa-do-japao.png"
-          alt="Emblema oficial da Tropa do Japão"
-        >
-      </div>
+      <div class="hero-signature"><span>日本</span><small>TROPA DO JAPÃO / FIVEM RP</small></div>
+    </section>
+
+    <section class="section container jp-leadership" aria-labelledby="jp-lead-title">
+      <div class="jp-lead-photo"><img src="/imagens-japao/lideranca.webp" alt="Personagem da liderança junto ao veículo personalizado do Japão" loading="lazy" width="1920" height="1080"><span>00 / LIDERANÇA</span></div>
+      <div class="jp-lead-copy"><span class="kicker">A FRENTE DA TROPA</span><h2 id="jp-lead-title">QUEM LIDERA<br><em>FAZ HISTÓRIA.</em></h2><p>Respeito, união e compromisso com a nossa comunidade. A identidade do Japão começa na liderança e se fortalece com cada integrante.</p><a class="btn ghost" href="#membros">Conhecer nossa hierarquia →</a></div>
     </section>
 
     <!-- MEMBROS -->
@@ -290,6 +291,7 @@
     <!-- SOBRE -->
     <section class="section about" id="sobre">
       <div class="container about-inner">
+        <img class="jp-about-photo" src="/imagens-japao/equipe.webp" alt="Integrantes da Tropa do Japão reunidos no RP" loading="lazy" width="1509" height="735">
         <div>
           <span class="kicker">
             NOSSA IDENTIDADE
@@ -521,22 +523,7 @@
     </section>
   </main>
 
-  <!-- RODAPÉ -->
-  <footer>
-    <div class="container footer-inner">
-      <span class="brand footer-brand">
-        TROPA DO <span class="red">JAPÃO</span>
-      </span>
-
-      <span>
-        Tropa do Japão • FiveM RP
-      </span>
-
-      <span>
-        Feito para a tropa.
-      </span>
-    </div>
-  </footer>
+  <footer class="jp-footer"><div class="container jp-footer-grid"><div><a class="brand" href="#inicio">TROPA DO <span class="red">JAPÃO</span></a><p>Portal oficial • Lado Leste RP<br>Respeito. União. Lealdade.</p></div><div><strong>EXPLORE</strong><a href="#membros">Nossa tropa</a><a href="#lives">Transmissões</a><a href="/galeria.html">Galeria</a></div><div><strong>COMUNIDADE</strong><a href="#redes">Redes sociais</a><a href="#sobre">Sobre o Japão</a><a href="#painel">Área restrita</a></div></div><div class="container jp-footer-end"><span>Tropa do Japão • FiveM Roleplay</span><a href="#inicio">Voltar ao topo ↑</a></div></footer>
 
   <!-- JAVASCRIPT -->
   <script src="app.js"></script>

@@ -1,4 +1,3 @@
-
 // ==========================================
 // TROPA DO JAPAO - APP.JS
 // PARTE 1 - SITE PUBLICO
@@ -1103,3 +1102,14 @@ setInterval(() => {
 // FIM DO APP.JS
 // TROPA DO JAPAO - BOT DIV
 // ==========================================
+// ETAPA 1 — animações progressivas e acessibilidade do menu
+if (menuBtn && navLinks) {
+  const syncMenu = () => menuBtn.setAttribute('aria-expanded', String(navLinks.classList.contains('open')));
+  menuBtn.addEventListener('click', syncMenu);
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', syncMenu));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && navLinks.classList.contains('open')) { navLinks.classList.remove('open'); syncMenu(); menuBtn.focus(); } });
+}
+if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('jp-reveal'); observer.unobserve(entry.target); } }); }, {threshold:0.12});
+  document.querySelectorAll('.section-head, .jp-lead-photo, .jp-lead-copy, .jp-about-photo').forEach(node => observer.observe(node));
+}
