@@ -3,7 +3,9 @@ const crypto = require('crypto');
 
 module.exports = function(app, readMembers, getPresenceMap) {
 
-  // CONFIGURACOES DO DISCORD
+  let blockedUntil = 0;
+  let tokenInProgress = false;
+
   const config = () => ({
     id: (process.env.DISCORD_CLIENT_ID || '').trim(),
     secret: (process.env.DISCORD_CLIENT_SECRET || '').trim(),
@@ -14,7 +16,6 @@ module.exports = function(app, readMembers, getPresenceMap) {
     return res.redirect('/portal.html?erro=' + reason);
   };
 
-  // LOCALIZAR MEMBRO CADASTRADO
   const find = async id => {
     const members = await readMembers();
 
@@ -25,16 +26,31 @@ module.exports = function(app, readMembers, getPresenceMap) {
     return matches.length === 1 ? matches[0] : null;
   };
 
-  // INICIAR LOGIN COM DISCORD
+  // INICIAR LOGIN
   app.get('/auth/discord', (req, res) => {
+
+    if (Date.now() < blockedUntil) {
+
+      const remaining = Math.ceil(
+        (blockedUntil - Date.now()) / 1000
+      );
+
+      console.log(
+        'Portal OAuth: aguarde ' + remaining + ' segundos'
+      );
+
+      return fail(res, 'login');
+    }
 
     const c = config();
 
-    if (!c.id || !c.secret || !c.redirect ||
-        !process.env.SESSION_SECRET) {
-
+    if (
+      !c.id ||
+      !c.secret ||
+      !c.redirect ||
+      !process.env.SESSION_SECRET
+    ) {
       console.error('Portal OAuth: configuracao incompleta');
-
       return fail(res, 'config');
     }
 
@@ -54,6 +70,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
     });
 
     req.session.save(err => {
+
       if (err) return fail(res, 'login');
 
       res.redirect(
@@ -62,7 +79,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
     });
   });
 
-  // RETORNO DA AUTORIZACAO DO DISCORD
+  // CALLBACK DO DISCORD
   app.get('/auth/discord/callback', async (req, res) => {
 
     const pending = req.session.portalState;
@@ -79,11 +96,17 @@ module.exports = function(app, readMembers, getPresenceMap) {
       return fail(res, 'login');
     }
 
+    if (Date.now() < blockedUntil || tokenInProgress) {
+      console.log('Portal OAuth: solicitacao temporariamente bloqueada');
+      return fail(res, 'login');
+    }
+
+    tokenInProgress = true;
+
     try {
 
       const c = config();
 
-      // SOLICITAR TOKEN DE ACESSO
       const token = await fetch(
         'https://discord.com/api/v10/oauth2/token',
         {
@@ -91,7 +114,8 @@ module.exports = function(app, readMembers, getPresenceMap) {
 
           headers: {
             'Content-Type':
-              'application/x-www-form-urlencoded'
+              'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
           },
 
           body: new URLSearchParams({
@@ -102,35 +126,99 @@ module.exports = function(app, readMembers, getPresenceMap) {
             redirect_uri: c.redirect
           }),
 
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(15000)
         }
       );
 
-      // MOSTRAR ERRO REAL NOS LOGS
+      // DIAGNOSTICO DO DISCORD
       if (!token.ok) {
 
-        const detail = await token.json()
-          .catch(() => ({}));
+        const raw = await token.text();
 
-        const known = [
+        let detail = {};
+
+        try {
+          detail = JSON.parse(raw);
+        } catch {}
+
+        const retryAfter = token.headers.get('retry-after');
+        const globalLimit = token.headers.get('x-ratelimit-global');
+        const rateScope = token.headers.get('x-ratelimit-scope');
+        const server = token.headers.get('server');
+        const cfRay = token.headers.get('cf-ray');
+        const contentType = token.headers.get('content-type');
+
+        const knownErrors = [
           'invalid_client',
           'invalid_grant',
           'invalid_request',
           'unauthorized_client',
-          'unsupported_grant_type',
           'invalid_scope',
           'access_denied',
-          'redirect_uri_mismatch'
+          'unsupported_grant_type'
         ];
 
-        const reason = known.includes(detail.error)
-          ? detail.error
-          : 'unknown_error';
+        console.error('========== PORTAL OAUTH ==========');
+        console.error('HTTP:', token.status);
+        console.error('Retry-After:', retryAfter);
+        console.error('Global Limit:', globalLimit);
+        console.error('Rate Scope:', rateScope);
+        console.error('Server:', server);
+        console.error('Cloudflare Ray:', cfRay);
+        console.error('Content-Type:', contentType);
 
         console.error(
-          'Portal OAuth: token HTTP ' +
-          token.status + ' | ' + reason
+          'OAuth Error:',
+          knownErrors.includes(detail.error)
+            ? detail.error
+            : 'unknown_error'
         );
+
+        console.error(
+          'Cloudflare 1015:',
+          /error\s*(code\s*)?1015/i.test(raw)
+        );
+
+        console.error(
+          'Cloudflare 1020:',
+          /error\s*(code\s*)?1020/i.test(raw)
+        );
+
+        if (token.status === 429) {
+
+          const waits = [60];
+
+          if (retryAfter) {
+            const seconds = Number(retryAfter);
+
+            if (Number.isFinite(seconds)) {
+              waits.push(seconds);
+            } else {
+              const date = Date.parse(retryAfter);
+
+              if (Number.isFinite(date)) {
+                waits.push((date - Date.now()) / 1000);
+              }
+            }
+          }
+
+          if (
+            typeof detail.retry_after === 'number' &&
+            Number.isFinite(detail.retry_after)
+          ) {
+            waits.push(detail.retry_after);
+          }
+
+          const seconds = Math.ceil(Math.max(...waits));
+
+          blockedUntil = Date.now() + seconds * 1000;
+
+          console.error(
+            'Tempo de espera:', seconds, 'segundos'
+          );
+        }
+
+        console.error('==================================');
 
         return fail(res, 'login');
       }
@@ -144,7 +232,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
         throw Error('token_missing');
       }
 
-      // BUSCAR PERFIL DO DISCORD
+      // BUSCAR CONTA DO DISCORD
       const response = await fetch(
         'https://discord.com/api/v10/users/@me',
         {
@@ -152,21 +240,44 @@ module.exports = function(app, readMembers, getPresenceMap) {
             Authorization: 'Bearer ' + t.access_token
           },
 
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(15000)
         }
       );
 
       if (!response.ok) {
-        throw Error('identity');
+
+        console.error(
+          'Portal OAuth: identity HTTP',
+          response.status
+        );
+
+        if (response.status === 429) {
+          const retry = response.headers.get('retry-after');
+          const seconds = Number(retry);
+          const date = Date.parse(retry || '');
+
+          const wait = Math.max(
+            60,
+            Number.isFinite(seconds) ? seconds : 0,
+            Number.isFinite(date)
+              ? (date - Date.now()) / 1000
+              : 0
+          );
+
+          blockedUntil = Date.now() + wait * 1000;
+        }
+
+        return fail(res, 'login');
       }
 
       const u = await response.json();
 
-      // VERIFICAR SE PERTENCE A TROPA
+      // VERIFICAR CADASTRO
       if (
         !/^\d{15,22}$/.test(u.id) ||
         !await find(u.id)
       ) {
+
         console.log(
           'Portal OAuth: membro nao cadastrado ou duplicado'
         );
@@ -174,7 +285,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
         return fail(res, 'membro');
       }
 
-      // CRIAR SESSAO DO INTEGRANTE
+      // CRIAR SESSAO
       req.session.regenerate(err => {
 
         if (err) return fail(res, 'login');
@@ -197,13 +308,20 @@ module.exports = function(app, readMembers, getPresenceMap) {
 
     } catch (e) {
 
-      console.error('Portal OAuth:', e.message);
+      console.error(
+        'Portal OAuth: falha de comunicacao',
+        e.name
+      );
 
       return fail(res, 'login');
+
+    } finally {
+
+      tokenInProgress = false;
     }
   });
 
-  // DADOS DO INTEGRANTE
+  // PERFIL DO INTEGRANTE
   app.get('/api/portal/me', async (req, res) => {
 
     res.set('Cache-Control', 'no-store');
@@ -211,6 +329,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
     const u = req.session.portalUser;
 
     if (!u) {
+
       return res.status(401).json({
         error: 'Entre pelo Discord.'
       });
@@ -234,9 +353,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
       res.json({
 
         name: m.name,
-
         tag: m.tag,
-
         role: m.role,
 
         status: presence.get(u.id)
@@ -256,7 +373,7 @@ module.exports = function(app, readMembers, getPresenceMap) {
 
       });
 
-    } catch (e) {
+    } catch {
 
       res.status(503).json({
         error: 'Não foi possível consultar seu cadastro.'
@@ -274,8 +391,8 @@ module.exports = function(app, readMembers, getPresenceMap) {
       res.status(err ? 500 : 200).json({
         ok: !err
       });
-
     });
   });
 
 };
+
