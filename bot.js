@@ -1689,3 +1689,18 @@ client.login(
 
   process.exitCode = 1;
 });
+
+// FARM: lembretes em horário de Brasília
+let farmBusy=false;
+async function farmReminder(){
+ if(farmBusy||!client.isReady()||!SITE_URL||!process.env.BOT_SYNC_SECRET)return;
+ const hour=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',hourCycle:'h23'}).format(new Date());
+ if(!['12','20'].includes(hour))return;
+ farmBusy=true;
+ try{
+ const headers={Authorization:'Bearer '+process.env.BOT_SYNC_SECRET,'Content-Type':'application/json'};
+ const r=await fetch(SITE_URL+'/api/bot/farm/pending',{headers,signal:AbortSignal.timeout(30000)});if(!r.ok)return;const d=await r.json();
+ for(const m of d.members){try{const c=await fetch(SITE_URL+'/api/bot/farm/claim',{method:'POST',headers,body:JSON.stringify({id:m.id,slot:hour,day:d.day}),signal:AbortSignal.timeout(30000)});if(!c.ok||!(await c.json()).claimed)continue;const u=await client.users.fetch(m.id);await u.send('🇯🇵 FARM RP — Meta: '+d.goal+' | Entregue: '+m.total+' | Faltante: '+(d.goal-m.total)+' flores. Consulte '+PORTAL+'/farm.html');}catch(e){console.error('FARM DM não enviada:',e.name);}}
+ }catch(e){console.error('FARM lembrete:',e.name);}finally{farmBusy=false;}
+}
+setInterval(farmReminder,60000);

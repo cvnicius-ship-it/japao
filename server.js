@@ -1454,6 +1454,7 @@ app.get('/api/health', (req, res) => {
 // ========================================
 
 require('./portal-routes')(app, readMembers, getPresenceMap);
+require('./farm-routes')(app, {redis, readMembers, getPresenceMap, botAuthorized});
 
 app.use((error, req, res, next) => {
   console.error(
