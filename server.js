@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const express = require('express');
@@ -1453,6 +1452,8 @@ app.get('/api/health', (req, res) => {
 // ========================================
 // ERROS
 // ========================================
+
+require('./portal-routes')(app, readMembers, getPresenceMap);
 
 app.use((error, req, res, next) => {
   console.error(
